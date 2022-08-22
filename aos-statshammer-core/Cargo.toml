@@ -1,0 +1,23 @@
+[package]
+name = "aos-statshammer-core"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rand = "*"
+regex = "*"
+lazy_static = "*"
+itertools = "*"
+num-traits = "*"
+
+[dev-dependencies]
+clippy = "*"
+test-case = "*"
+criterion = "*"
+
+[[bench]]
+name = "all"
+path = "benches/all.rs"
+harness = false

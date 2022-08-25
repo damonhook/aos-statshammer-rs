@@ -6,7 +6,7 @@ use std::{
     ops::{AddAssign, SubAssign},
 };
 
-/// A `DiceNotation` struct represents an expression containing various dice and constant values 
+/// A `DiceNotation` struct represents an expression containing various dice and constant values
 /// (e.g: `2d6 + d3 - 2`) while providing some convenience functions for them.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DiceNotation {
@@ -17,15 +17,15 @@ pub struct DiceNotation {
 
 impl DiceNotation {
     /// Return a `DiceNotation` given the `Dice` and constant components.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `additions` - A vector containing all of the positive `Dice` components
     /// * `subtractions` - A vector containing all of the negative `Dice` components
     /// * `constant` - A constant value (positive or negative) for the notation (e.g: `2` or `-1`)
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use aos_statshammer_core::{Dice, DiceNotation};
     /// // Equivalent of 2d6 - d3 + 2
@@ -107,12 +107,12 @@ impl Rollable for DiceNotation {
 
 impl From<i32> for DiceNotation {
     /// Create a `DiceNotation` from an integer
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use aos_statshammer_core::DiceNotation;
-    /// 
+    ///
     /// let dn = DiceNotation::from(3);
     /// assert_eq!(dn, DiceNotation {additions: vec![], subtractions: vec![], constant: 3});
     /// ```
@@ -127,15 +127,15 @@ impl From<i32> for DiceNotation {
 
 impl From<Dice> for DiceNotation {
     /// Create a `DiceNotation` from a single `Dice`
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use aos_statshammer_core::{DiceNotation, Dice};
-    /// 
+    ///
     /// let dn = DiceNotation::from(Dice {sides: 6, quantity: 2});
     /// assert_eq!(
-    ///     dn, 
+    ///     dn,
     ///     DiceNotation {
     ///         additions: vec![Dice {sides: 6, quantity: 2}],
     ///         subtractions: vec![],
@@ -156,14 +156,14 @@ impl TryFrom<&str> for DiceNotation {
     type Error = &'static str;
 
     /// Attempts to create a `DiceNotation` from a `&str`.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ## Valid
-    /// 
+    ///
     /// ```
     /// use aos_statshammer_core::{DiceNotation, Dice};
-    /// 
+    ///
     /// let dn = DiceNotation::try_from("2d6 + d3 - 2");
     /// assert!(dn.is_ok());
     /// assert_eq!(dn, Ok(DiceNotation {
@@ -172,12 +172,12 @@ impl TryFrom<&str> for DiceNotation {
     ///      constant: -2,
     /// }));
     /// ```
-    /// 
+    ///
     /// ## Invalid
-    /// 
+    ///
     /// ```
     /// use aos_statshammer_core::DiceNotation;
-    /// 
+    ///
     /// let dn = DiceNotation::try_from("invalid");
     /// assert!(dn.is_err());
     /// ```
@@ -209,9 +209,7 @@ impl TryFrom<&str> for DiceNotation {
                             subtractions.push(dice);
                         }
                     }
-                    Err(_) => {
-                        return Err("Invalid dice notation string provided")
-                    },
+                    Err(_) => return Err("Invalid dice notation string provided"),
                 }
             } else {
                 let val: i32 = item.parse().unwrap_or(0);
@@ -235,9 +233,9 @@ impl TryFrom<&str> for DiceNotation {
 
 impl fmt::Display for DiceNotation {
     /// Formats the `DiceNotation` value using the given formatter.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use aos_statshammer_core::{DiceNotation, Dice};
     ///
@@ -263,7 +261,7 @@ impl fmt::Display for DiceNotation {
             cmp::Ordering::Greater => {
                 let prefix = if !display.is_empty() { "+" } else { "" };
                 let _ = write!(display, "{}{}", prefix, self.constant);
-            },
+            }
             cmp::Ordering::Less => {
                 display.push_str(&self.constant.to_string());
             }
@@ -311,13 +309,11 @@ mod tests {
 
     #[test]
     fn new() {
-        let output = DiceNotation::new(
-            vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2
-        );
-        let expected = DiceNotation { 
-            additions: vec![Dice::new(6, 2)], 
-            subtractions: vec![Dice::new(6, 1)], 
-            constant: 2
+        let output = DiceNotation::new(vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2);
+        let expected = DiceNotation {
+            additions: vec![Dice::new(6, 2)],
+            subtractions: vec![Dice::new(6, 1)],
+            constant: 2,
         };
         assert_eq!(output, expected);
     }
@@ -325,66 +321,54 @@ mod tests {
     #[test]
     fn empty() {
         let output = DiceNotation::empty();
-        let expected = DiceNotation { 
-            additions: vec![], 
-            subtractions: vec![], 
-            constant: 0
+        let expected = DiceNotation {
+            additions: vec![],
+            subtractions: vec![],
+            constant: 0,
         };
         assert_eq!(output, expected);
     }
 
     #[test]
     fn add_assign_dice_notation() {
-        let mut dn = DiceNotation::new(
-            vec![Dice::new(6, 2)], 
-            vec![Dice::new(6, 1)], 
-            2
-        );
+        let mut dn = DiceNotation::new(vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2);
         dn += DiceNotation::new(
-            vec![Dice::new(8, 1), Dice::new(10, 2)], 
-            vec![Dice::new(3, 1)], 
-            -1
+            vec![Dice::new(8, 1), Dice::new(10, 2)],
+            vec![Dice::new(3, 1)],
+            -1,
         );
         let expected = DiceNotation::new(
-            vec![Dice::new(6, 2), Dice::new(8, 1), Dice::new(10, 2)], 
+            vec![Dice::new(6, 2), Dice::new(8, 1), Dice::new(10, 2)],
             vec![Dice::new(6, 1), Dice::new(3, 1)],
-            1
+            1,
         );
         assert_eq!(dn, expected);
     }
 
     #[test]
     fn add_assign_dice() {
-        let mut dn = DiceNotation::new(
-            vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2
-        );
+        let mut dn = DiceNotation::new(vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2);
         dn += Dice::new(8, 1);
         assert_eq!(dn.additions, vec![Dice::new(6, 2), Dice::new(8, 1)]);
     }
 
     #[test]
     fn sub_assign_dice() {
-        let mut dn = DiceNotation::new(
-            vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2
-        );
+        let mut dn = DiceNotation::new(vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2);
         dn -= Dice::new(8, 1);
         assert_eq!(dn.subtractions, vec![Dice::new(6, 1), Dice::new(8, 1)]);
     }
 
     #[test]
     fn add_assign_i32() {
-        let mut dn = DiceNotation::new(
-            vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2
-        );
+        let mut dn = DiceNotation::new(vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2);
         dn += 2;
         assert_eq!(dn.constant, 4);
     }
 
     #[test]
     fn sub_assign_i32() {
-        let mut dn = DiceNotation::new(
-            vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2
-        );
+        let mut dn = DiceNotation::new(vec![Dice::new(6, 2)], vec![Dice::new(6, 1)], 2);
         dn -= 2;
         assert_eq!(dn.constant, 0);
     }

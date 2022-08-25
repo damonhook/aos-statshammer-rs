@@ -5,12 +5,11 @@ use crate::{abilities::*, Characteristic as Char, Rollable, Weapon};
 #[derive(Debug)]
 pub struct MaxDamageProcessor<'a> {
     weapon: &'a Weapon,
-    abilities: &'a AbilityManager,
 }
 
 impl<'a> MaxDamageProcessor<'a> {
-    pub fn new(weapon: &'a Weapon, abilities: &'a AbilityManager) -> Self {
-        Self { weapon, abilities }
+    pub fn new(weapon: &'a Weapon) -> Self {
+        Self { weapon }
     }
 
     pub fn max_damage(&self) -> u32 {
@@ -23,7 +22,7 @@ impl<'a> MaxDamageProcessor<'a> {
     }
 
     fn max_bonus(&self, characteristic: Char) -> u32 {
-        self.abilities.items.iter().fold(0, |acc, a| match a {
+        self.weapon.abilities.iter().fold(0, |acc, a| match a {
             Ability::Bonus(x) if x.characteristic == characteristic => acc + x.value.max(),
             _ => acc,
         })
@@ -31,8 +30,8 @@ impl<'a> MaxDamageProcessor<'a> {
 
     fn max_exploding(&self, base: u32) -> u32 {
         let total = self
+            .weapon
             .abilities
-            .items
             .iter()
             .fold(base, |acc, ability| match ability {
                 Ability::Exploding(a) => acc + (acc * a.extra.max()),
@@ -42,8 +41,8 @@ impl<'a> MaxDamageProcessor<'a> {
     }
 
     fn max_damage_with_mortal_wounds(&self, current: u32) -> u32 {
-        self.abilities
-            .items
+        self.weapon
+            .abilities
             .iter()
             .fold(current, |acc, ability| match ability {
                 Ability::MortalWounds(a) => {

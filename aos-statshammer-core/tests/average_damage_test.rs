@@ -35,8 +35,8 @@ macro_rules! assert_processor_results_eq {
 
 #[test]
 fn average_damage_gotrek_axe() {
-    let (weapon, abilities) = data::gotrek_axe();
-    let processor = AverageDamageProcessor::new(&weapon, &abilities);
+    let weapon = data::gotrek_axe();
+    let processor = AverageDamageProcessor::new(&weapon);
     let output = processor.average_damage();
     assert_processor_results_eq!(
         output,
@@ -46,8 +46,8 @@ fn average_damage_gotrek_axe() {
 
 #[test]
 fn average_hearthguard_berserkers_broadaxes() {
-    let (weapon, abilities) = data::hearthguard_berserkers_broadaxes();
-    let processor = AverageDamageProcessor::new(&weapon, &abilities);
+    let weapon = data::hearthguard_berserkers_broadaxes();
+    let processor = AverageDamageProcessor::new(&weapon);
     let output = processor.average_damage();
     assert_processor_results_eq!(
         output,
@@ -57,8 +57,8 @@ fn average_hearthguard_berserkers_broadaxes() {
 
 #[test]
 fn average_chainrasp_horde() {
-    let (weapon, abilities) = data::chainrasp_horde();
-    let processor = AverageDamageProcessor::new(&weapon, &abilities);
+    let weapon = data::chainrasp_horde();
+    let processor = AverageDamageProcessor::new(&weapon);
     let output = processor.average_damage();
     assert_processor_results_eq!(
         output,

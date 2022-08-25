@@ -13,7 +13,6 @@ itertools = "*"
 num-traits = "*"
 
 [dev-dependencies]
-clippy = "*"
 test-case = "*"
 criterion = "*"
 float_eq = "*"

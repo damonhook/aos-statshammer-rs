@@ -1,9 +1,9 @@
 use criterion::*;
 
-mod average;
+mod benchmark_average;
 
 pub fn bench(_c: &mut Criterion) {
-    average::benches();
+    benchmark_average::benches();
 }
 
 criterion_group!(benches, bench);

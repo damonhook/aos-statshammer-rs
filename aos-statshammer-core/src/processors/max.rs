@@ -1,8 +1,6 @@
 use std::cmp;
 
-use crate::{
-    abilities::*, characteristic::Characteristic as Char, rollable::Rollable, weapon::Weapon,
-};
+use crate::{abilities::*, Characteristic as Char, Rollable, Weapon};
 
 #[derive(Debug)]
 pub struct MaxDamageProcessor<'a> {

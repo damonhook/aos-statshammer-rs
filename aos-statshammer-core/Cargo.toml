@@ -16,6 +16,7 @@ num-traits = "*"
 clippy = "*"
 test-case = "*"
 criterion = "*"
+float_eq = "*"
 
 [[bench]]
 name = "all"

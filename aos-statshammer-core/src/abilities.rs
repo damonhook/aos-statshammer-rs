@@ -1,6 +1,6 @@
-use crate::rollable::DiceNotation;
+use crate::DiceNotation;
 
-use crate::characteristic::{Characteristic, RollCharacteristic};
+use crate::{Characteristic, RollCharacteristic};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Reroll {
@@ -144,6 +144,10 @@ pub struct AbilityManager {
 impl AbilityManager {
     pub fn new(items: Vec<Ability>) -> Self {
         Self { items }
+    }
+
+    pub fn empty() -> Self {
+        Self { items: vec![] }
     }
 
     pub fn reroll_ability(&self, phase: RollCharacteristic) -> Option<&Ability> {

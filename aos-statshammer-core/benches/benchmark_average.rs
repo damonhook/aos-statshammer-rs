@@ -1,8 +1,6 @@
 use aos_statshammer_core::{
-    abilities::*,
-    processors::AverageDamageProcessor,
-    rollable::{Dice, DiceNotation},
-    Characteristic as Char, RollCharacteristic as RollChar, Weapon,
+    abilities::*, processors::AverageDamageProcessor, Characteristic as Char, Dice, DiceNotation,
+    RollCharacteristic as RollChar, Weapon,
 };
 use criterion::*;
 use std::time::Duration;
@@ -22,7 +20,7 @@ mod inputs {
                 rend: 1,
                 damage: DiceNotation::from(2),
             };
-            (weapon, AbilityManager::new(vec![]))
+            (weapon, AbilityManager::empty())
         }
 
         pub fn only_rerolls() -> (Weapon, AbilityManager) {

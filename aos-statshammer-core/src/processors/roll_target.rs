@@ -30,7 +30,6 @@ pub struct RollTarget<T> {
 
 impl<T> RollTarget<T>
 where
-    // T: Add<T, Output = T> + AddAssign<T> + Sub<T, Output = T> + SubAssign<T> + Zero + Max + Copy
     T: Sub<T, Output = T> + Max + Copy,
 {
     pub fn new(initial: T, modifier: T, min_value: Option<T>) -> Self {
@@ -145,8 +144,8 @@ mod tests {
         assert_eq!(output, expected);
     }
 
-    #[test_case(None => it eq 3. ; "No Bounds")]
-    #[test_case(Some(4.) => it eq 4. ; "Min Bounded")]
+    #[test_case(None => 3. ; "No Bounds")]
+    #[test_case(Some(4.) => 4. ; "Min Bounded")]
     fn roll_target_unmodified(min_value: Option<f32>) -> f32 {
         let target: RollTarget<f32> = RollTarget {
             initial: 3.,
@@ -156,8 +155,8 @@ mod tests {
         target.unmodified()
     }
 
-    #[test_case(None => it eq 1. ; "No Bounds")]
-    #[test_case(Some(4.) => it eq 4. ; "Min Bounded")]
+    #[test_case(None => 1. ; "No Bounds")]
+    #[test_case(Some(4.) => 4. ; "Min Bounded")]
     fn roll_target_modified(min_value: Option<f32>) -> f32 {
         let target: RollTarget<f32> = RollTarget {
             initial: 3.,

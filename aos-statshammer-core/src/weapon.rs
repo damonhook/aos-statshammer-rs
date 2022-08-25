@@ -1,5 +1,7 @@
-use crate::rollable::DiceNotation;
+use crate::DiceNotation;
 
+/// A `Weapon` struct represents a single weapon profile that belongs to an Age of Sigmar unit and
+/// includes all of the profile characteristics for it.
 #[derive(Debug, PartialEq)]
 pub struct Weapon {
     pub models: u32,
@@ -11,6 +13,15 @@ pub struct Weapon {
 }
 
 impl Weapon {
+    /// Return a `Weapon` given the profile characteristics
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aos_statshammer_core::{Weapon, DiceNotation};
+    ///
+    /// let weapon = Weapon::new(10, DiceNotation::from(2), 3, 4, 1, DiceNotation::from(2));
+    /// ```
     pub fn new(
         models: u32,
         attacks: DiceNotation,

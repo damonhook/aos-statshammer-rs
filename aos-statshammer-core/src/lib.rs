@@ -1,7 +1,8 @@
 mod characteristic;
 pub use characteristic::{Characteristic, RollCharacteristic};
 
-pub mod rollable;
+mod rollable;
+pub use rollable::{Rollable, Dice, DiceNotation};
 
 mod weapon;
 pub use weapon::Weapon;

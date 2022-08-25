@@ -27,7 +27,7 @@ impl DiceNotation {
     /// # Examples
     /// 
     /// ```
-    /// use aos_statshammer_core::rollable::{Dice, DiceNotation};
+    /// use aos_statshammer_core::{Dice, DiceNotation};
     /// // Equivalent of 2d6 - d3 + 2
     /// let dn = DiceNotation::new(
     ///     vec![Dice {sides: 6, quantity: 2}],
@@ -105,72 +105,13 @@ impl Rollable for DiceNotation {
     }
 }
 
-impl fmt::Display for DiceNotation {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn dice_list_to_string(lst: &[Dice], sep: &str) -> String {
-            let string_vec = lst.iter().map(Dice::to_string).collect::<Vec<String>>();
-            string_vec.join(sep)
-        }
-
-        let mut display: String = dice_list_to_string(&self.additions, "+");
-        if !self.subtractions.is_empty() {
-            // display.push_str(&format!("-{}", dice_list_to_string(&self.subtractions, "-")))
-            let _ = write!(display, "-{}", dice_list_to_string(&self.subtractions, "-"));
-        }
-
-        match self.constant.cmp(&0) {
-            cmp::Ordering::Greater => {
-                let prefix = if !display.is_empty() { "+" } else { "" };
-                // display.push_str(&format!("{}{}", prefix, self.constant));
-                let _ = write!(display, "{}{}", prefix, self.constant);
-            },
-            cmp::Ordering::Less => {
-                display.push_str(&self.constant.to_string());
-            }
-            cmp::Ordering::Equal => {}
-        }
-
-        write!(f, "{}", display)
-    }
-}
-
-impl AddAssign<DiceNotation> for DiceNotation {
-    fn add_assign(&mut self, rhs: DiceNotation) {
-        self.additions.extend(rhs.additions.to_vec());
-        self.subtractions.extend(rhs.subtractions.to_vec());
-        self.constant += rhs.constant;
-    }
-}
-
-impl AddAssign<Dice> for DiceNotation {
-    fn add_assign(&mut self, rhs: Dice) {
-        self.additions.push(rhs);
-    }
-}
-impl SubAssign<Dice> for DiceNotation {
-    fn sub_assign(&mut self, rhs: Dice) {
-        self.subtractions.push(rhs);
-    }
-}
-
-impl AddAssign<i32> for DiceNotation {
-    fn add_assign(&mut self, rhs: i32) {
-        self.constant += rhs;
-    }
-}
-impl SubAssign<i32> for DiceNotation {
-    fn sub_assign(&mut self, rhs: i32) {
-        self.constant -= rhs;
-    }
-}
-
 impl From<i32> for DiceNotation {
     /// Create a `DiceNotation` from an integer
     /// 
     /// # Examples
     /// 
     /// ```
-    /// use aos_statshammer_core::rollable::DiceNotation;
+    /// use aos_statshammer_core::DiceNotation;
     /// 
     /// let dn = DiceNotation::from(3);
     /// assert_eq!(dn, DiceNotation {additions: vec![], subtractions: vec![], constant: 3});
@@ -190,7 +131,7 @@ impl From<Dice> for DiceNotation {
     /// # Examples
     /// 
     /// ```
-    /// use aos_statshammer_core::rollable::{DiceNotation, Dice};
+    /// use aos_statshammer_core::{DiceNotation, Dice};
     /// 
     /// let dn = DiceNotation::from(Dice {sides: 6, quantity: 2});
     /// assert_eq!(
@@ -221,7 +162,7 @@ impl TryFrom<&str> for DiceNotation {
     /// ## Valid
     /// 
     /// ```
-    /// use aos_statshammer_core::rollable::{DiceNotation, Dice};
+    /// use aos_statshammer_core::{DiceNotation, Dice};
     /// 
     /// let dn = DiceNotation::try_from("2d6 + d3 - 2");
     /// assert!(dn.is_ok());
@@ -235,7 +176,7 @@ impl TryFrom<&str> for DiceNotation {
     /// ## Invalid
     /// 
     /// ```
-    /// use aos_statshammer_core::rollable::DiceNotation;
+    /// use aos_statshammer_core::DiceNotation;
     /// 
     /// let dn = DiceNotation::try_from("invalid");
     /// assert!(dn.is_err());
@@ -289,6 +230,77 @@ impl TryFrom<&str> for DiceNotation {
             subtractions,
             constant,
         })
+    }
+}
+
+impl fmt::Display for DiceNotation {
+    /// Formats the `DiceNotation` value using the given formatter.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use aos_statshammer_core::{DiceNotation, Dice};
+    ///
+    /// let dn = DiceNotation::new(
+    ///     vec![Dice {sides: 6, quantity: 2}],
+    ///     vec![Dice {sides: 3, quantity: 1}],
+    ///     2
+    /// );
+    /// assert_eq!(format!("{}", dn), "2d6-d3+2");
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fn dice_list_to_string(lst: &[Dice], sep: &str) -> String {
+            let string_vec = lst.iter().map(Dice::to_string).collect::<Vec<String>>();
+            string_vec.join(sep)
+        }
+
+        let mut display: String = dice_list_to_string(&self.additions, "+");
+        if !self.subtractions.is_empty() {
+            let _ = write!(display, "-{}", dice_list_to_string(&self.subtractions, "-"));
+        }
+
+        match self.constant.cmp(&0) {
+            cmp::Ordering::Greater => {
+                let prefix = if !display.is_empty() { "+" } else { "" };
+                let _ = write!(display, "{}{}", prefix, self.constant);
+            },
+            cmp::Ordering::Less => {
+                display.push_str(&self.constant.to_string());
+            }
+            cmp::Ordering::Equal => {}
+        }
+
+        write!(f, "{}", display)
+    }
+}
+
+impl AddAssign<DiceNotation> for DiceNotation {
+    fn add_assign(&mut self, rhs: DiceNotation) {
+        self.additions.extend(rhs.additions.to_vec());
+        self.subtractions.extend(rhs.subtractions.to_vec());
+        self.constant += rhs.constant;
+    }
+}
+
+impl AddAssign<Dice> for DiceNotation {
+    fn add_assign(&mut self, rhs: Dice) {
+        self.additions.push(rhs);
+    }
+}
+impl SubAssign<Dice> for DiceNotation {
+    fn sub_assign(&mut self, rhs: Dice) {
+        self.subtractions.push(rhs);
+    }
+}
+
+impl AddAssign<i32> for DiceNotation {
+    fn add_assign(&mut self, rhs: i32) {
+        self.constant += rhs;
+    }
+}
+impl SubAssign<i32> for DiceNotation {
+    fn sub_assign(&mut self, rhs: i32) {
+        self.constant -= rhs;
     }
 }
 
@@ -377,28 +389,28 @@ mod tests {
         assert_eq!(dn.constant, 0);
     }
 
-    #[test_case("d6" => it eq Ok(
+    #[test_case("d6" => Ok(
         DiceNotation { 
             additions: vec![Dice::new(6, 1)],
             subtractions: vec![],
             constant: 0
         }
     ) ; "d6")]
-    #[test_case("2d6" => it eq Ok(
+    #[test_case("2d6" => Ok(
         DiceNotation { 
             additions: vec![Dice::new(6, 2)], 
             subtractions: vec![], 
             constant: 0
         }
     ) ; "2d6")]
-    #[test_case("2d6 - d6 + 2" => it eq Ok(
+    #[test_case("2d6 - d6 + 2" => Ok(
         DiceNotation { 
             additions: vec![Dice::new(6, 2)], 
             subtractions: vec![Dice::new(6, 1)], 
             constant: 2
         }
     ) ; "2d6 - d6 + 2")]
-    #[test_case("4d8 - 3" => it eq Ok(
+    #[test_case("4d8 - 3" => Ok(
         DiceNotation { 
             additions: vec![Dice::new(8, 4)], 
             subtractions: vec![], 
@@ -410,26 +422,26 @@ mod tests {
         DiceNotation::try_from(data)
     }
 
-    #[test_case(DiceNotation::try_from("d6").unwrap() => it eq 1 ; "d6")]
-    #[test_case(DiceNotation::try_from("2d6").unwrap() => it eq 2 ; "2d6")]
-    #[test_case(DiceNotation::try_from("2d6 - d6 + 2").unwrap() => it eq 0 ; "2d6 - d6 + 2")]
-    #[test_case(DiceNotation::try_from("4d8 - 3").unwrap() => it eq 1 ; "4d8 - 3")]
+    #[test_case(DiceNotation::try_from("d6").unwrap() => 1 ; "d6")]
+    #[test_case(DiceNotation::try_from("2d6").unwrap() => 2 ; "2d6")]
+    #[test_case(DiceNotation::try_from("2d6 - d6 + 2").unwrap() => 0 ; "2d6 - d6 + 2")]
+    #[test_case(DiceNotation::try_from("4d8 - 3").unwrap() => 1 ; "4d8 - 3")]
     fn min(dice_notation: DiceNotation) -> u32 {
         dice_notation.min()
     }
 
-    #[test_case(DiceNotation::try_from("d6").unwrap() => it eq 6 ; "d6")]
-    #[test_case(DiceNotation::try_from("2d6").unwrap() => it eq 12 ; "2d6")]
-    #[test_case(DiceNotation::try_from("2d6 - d6 + 2").unwrap() => it eq 13 ; "2d6 - d6 + 2")]
-    #[test_case(DiceNotation::try_from("4d8 - 3").unwrap() => it eq 29 ; "4d8 - 3")]
+    #[test_case(DiceNotation::try_from("d6").unwrap() => 6 ; "d6")]
+    #[test_case(DiceNotation::try_from("2d6").unwrap() => 12 ; "2d6")]
+    #[test_case(DiceNotation::try_from("2d6 - d6 + 2").unwrap() => 13 ; "2d6 - d6 + 2")]
+    #[test_case(DiceNotation::try_from("4d8 - 3").unwrap() => 29 ; "4d8 - 3")]
     fn max(dice_notation: DiceNotation) -> u32 {
         dice_notation.max()
     }
 
-    #[test_case(DiceNotation::try_from("d6").unwrap() => it eq 3.5 ; "d6")]
-    #[test_case(DiceNotation::try_from("2d6").unwrap() => it eq 7.0 ; "2d6")]
-    #[test_case(DiceNotation::try_from("2d6 - d6 + 2").unwrap() => it eq 5.5 ; "2d6 - d6 + 2")]
-    #[test_case(DiceNotation::try_from("4d8 - 3").unwrap() => it eq 15.0 ; "4d8 - 3")]
+    #[test_case(DiceNotation::try_from("d6").unwrap() => 3.5 ; "d6")]
+    #[test_case(DiceNotation::try_from("2d6").unwrap() => 7.0 ; "2d6")]
+    #[test_case(DiceNotation::try_from("2d6 - d6 + 2").unwrap() => 5.5 ; "2d6 - d6 + 2")]
+    #[test_case(DiceNotation::try_from("4d8 - 3").unwrap() => 15.0 ; "4d8 - 3")]
     fn average(dice_notation: DiceNotation) -> f32 {
         dice_notation.average()
     }

@@ -5,9 +5,9 @@ use std::fmt;
 
 use super::Rollable;
 
-/// A `Dice` struct repesents a dice with a set number of sides. It can have any quantity of 
+/// A `Dice` struct repesents a dice with a set number of sides. It can have any quantity of
 /// these dice sharing the same number of sides (e.g: equivalent of `d6` or `2d6`).
-/// 
+///
 /// If you need a combination of different sided dice (or constants) then you will need to use a
 /// `DiceNotation` struct.
 #[derive(Debug, Clone, PartialEq)]
@@ -18,16 +18,16 @@ pub struct Dice {
 
 impl Dice {
     /// Create a `Dice` from a given number of sides and quantity.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `sides` - The number of sides for the dice
     /// * `quantity` - The quantity of dice with the given `sides`
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// use aos_statshammer_core::rollable::Dice;
+    /// use aos_statshammer_core::Dice;
     /// // Equivalent of 2d6
     /// let dice = Dice::new(6, 2);
     /// ```
@@ -64,19 +64,31 @@ impl Rollable for Dice {
     }
 }
 
-impl fmt::Display for Dice {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.quantity > 1 {
-            write!(f, "{}d{}", self.quantity, self.sides)
-        } else {
-            write!(f, "d{}", self.sides)
-        }
-    }
-}
-
 impl TryFrom<&str> for Dice {
     type Error = &'static str;
 
+    /// Attempts to create a `Dice` from a `&str`.
+    ///
+    /// # Examples
+    ///
+    /// ## Valid
+    ///
+    /// ```
+    /// use aos_statshammer_core::Dice;
+    ///
+    /// let dn = Dice::try_from("2d6");
+    /// assert!(dn.is_ok());
+    /// assert_eq!(dn, Ok(Dice {sides: 6, quantity: 2}));
+    /// ```
+    ///
+    /// ## Invalid
+    ///
+    /// ```
+    /// use aos_statshammer_core::Dice;
+    ///
+    /// let dn = Dice::try_from("invalid");
+    /// assert!(dn.is_err());
+    /// ```
     fn try_from(data: &str) -> Result<Self, Self::Error> {
         lazy_static! {
             static ref DICE_RE: Regex = Regex::new(r"^(\d+)?[dD](\d+)$").unwrap();
@@ -96,43 +108,63 @@ impl TryFrom<&str> for Dice {
     }
 }
 
+impl fmt::Display for Dice {
+    /// Formats the `Dice` value using the given formatter.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aos_statshammer_core::Dice;
+    ///
+    /// let dice = Dice::new(6, 2);
+    /// assert_eq!(format!("{}", dice), "2d6");
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.quantity > 1 {
+            write!(f, "{}d{}", self.quantity, self.sides)
+        } else {
+            write!(f, "d{}", self.sides)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use test_case::test_case;
 
-    #[test_case(Dice {sides: 3, quantity: 1} => it eq 1 ; "d3")]
-    #[test_case(Dice {sides: 6, quantity: 1} => it eq 1 ; "d6")]
-    #[test_case(Dice {sides: 6, quantity: 2} => it eq 2 ; "2d6")]
-    #[test_case(Dice {sides: 8, quantity: 4} => it eq 4 ; "4d8")]
-    #[test_case(Dice {sides: 10, quantity: 6} => it eq 6 ; "6d10")]
+    #[test_case(Dice {sides: 3, quantity: 1} => 1 ; "d3")]
+    #[test_case(Dice {sides: 6, quantity: 1} => 1 ; "d6")]
+    #[test_case(Dice {sides: 6, quantity: 2} => 2 ; "2d6")]
+    #[test_case(Dice {sides: 8, quantity: 4} => 4 ; "4d8")]
+    #[test_case(Dice {sides: 10, quantity: 6} => 6 ; "6d10")]
     fn min(dice: Dice) -> u32 {
         dice.min()
     }
 
-    #[test_case(Dice {sides: 3, quantity: 1} => it eq 3 ; "d3")]
-    #[test_case(Dice {sides: 6, quantity: 1} => it eq 6 ; "d6")]
-    #[test_case(Dice {sides: 6, quantity: 2} => it eq 12 ; "2d6")]
-    #[test_case(Dice {sides: 8, quantity: 4} => it eq 32 ; "4d8")]
-    #[test_case(Dice {sides: 10, quantity: 6} => it eq 60 ; "6d10")]
+    #[test_case(Dice {sides: 3, quantity: 1} => 3 ; "d3")]
+    #[test_case(Dice {sides: 6, quantity: 1} => 6 ; "d6")]
+    #[test_case(Dice {sides: 6, quantity: 2} => 12 ; "2d6")]
+    #[test_case(Dice {sides: 8, quantity: 4} => 32 ; "4d8")]
+    #[test_case(Dice {sides: 10, quantity: 6} => 60 ; "6d10")]
     fn max(dice: Dice) -> u32 {
         dice.max()
     }
 
-    #[test_case(Dice {sides: 3, quantity: 1} => it eq 2.0 ; "d3")]
-    #[test_case(Dice {sides: 6, quantity: 1} => it eq 3.5 ; "d6")]
-    #[test_case(Dice {sides: 6, quantity: 2} => it eq 7.0 ; "2d6")]
-    #[test_case(Dice {sides: 8, quantity: 4} => it eq 18.0 ; "4d8")]
-    #[test_case(Dice {sides: 10, quantity: 6} => it eq 33.0 ; "6d10")]
+    #[test_case(Dice {sides: 3, quantity: 1} => 2.0 ; "d3")]
+    #[test_case(Dice {sides: 6, quantity: 1} => 3.5 ; "d6")]
+    #[test_case(Dice {sides: 6, quantity: 2} => 7.0 ; "2d6")]
+    #[test_case(Dice {sides: 8, quantity: 4} => 18.0 ; "4d8")]
+    #[test_case(Dice {sides: 10, quantity: 6} => 33.0 ; "6d10")]
     fn average(dice: Dice) -> f32 {
         dice.average()
     }
 
-    #[test_case("d6" => it eq Ok(Dice {sides: 6, quantity: 1}) ; "lowercase d6")]
-    #[test_case("D6" => it eq Ok(Dice {sides: 6, quantity: 1}) ; "uppercase D6")]
-    #[test_case("2d6" => it eq Ok(Dice {sides: 6, quantity: 2}) ; "uppercase 2d6")]
-    #[test_case(" 4d8 " => it eq Ok(Dice {sides: 8, quantity: 4}) ; "hase spaces")]
-    #[test_case("2d6" => it eq Ok(Dice {sides: 6, quantity: 2}) ; "lowercase 4d8")]
+    #[test_case("d6" => Ok(Dice {sides: 6, quantity: 1}) ; "lowercase d6")]
+    #[test_case("D6" => Ok(Dice {sides: 6, quantity: 1}) ; "uppercase D6")]
+    #[test_case("2d6" => Ok(Dice {sides: 6, quantity: 2}) ; "uppercase 2d6")]
+    #[test_case(" 4d8 " => Ok(Dice {sides: 8, quantity: 4}) ; "hase spaces")]
+    #[test_case("2d6" => Ok(Dice {sides: 6, quantity: 2}) ; "lowercase 4d8")]
     #[test_case("invalid" => matches Err(_) ; "invalid")]
     fn from(data: &str) -> Result<Dice, &str> {
         Dice::try_from(data)

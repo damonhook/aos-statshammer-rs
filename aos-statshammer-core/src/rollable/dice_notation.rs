@@ -8,7 +8,7 @@ use std::{
 
 /// A `DiceNotation` struct represents an expression containing various dice and constant values
 /// (e.g: `2d6 + d3 - 2`) while providing some convenience functions for them.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiceNotation {
     pub additions: Vec<Dice>,
     pub subtractions: Vec<Dice>,

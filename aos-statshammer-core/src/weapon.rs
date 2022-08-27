@@ -2,7 +2,7 @@ use crate::{abilities::*, DiceNotation, RollCharacteristic};
 
 /// A `Weapon` struct represents a single weapon profile that belongs to an Age of Sigmar unit and
 /// includes all of the profile characteristics for it.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Weapon {
     pub models: u32,
     pub attacks: DiceNotation,

@@ -32,7 +32,7 @@ impl RerollFailed {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Bonus {
     pub characteristic: Characteristic,
     pub value: DiceNotation,
@@ -46,7 +46,7 @@ impl Bonus {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LeaderExtraAttacks {
     pub value: DiceNotation,
     pub num_models: u32,
@@ -57,7 +57,7 @@ impl LeaderExtraAttacks {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Exploding {
     pub characteristic: RollCharacteristic,
     pub on: u32,
@@ -81,7 +81,7 @@ impl Exploding {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MortalWounds {
     pub characteristic: RollCharacteristic,
     pub on: u32,
@@ -108,7 +108,7 @@ impl MortalWounds {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ability {
     Reroll(Reroll),
     RerollFailed(RerollFailed),

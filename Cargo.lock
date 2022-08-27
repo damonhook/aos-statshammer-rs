@@ -12,6 +12,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "aos-statshammer"
+version = "0.1.0"
+dependencies = [
+ "aos-statshammer-core",
+ "float_eq",
+]
+
+[[package]]
 name = "aos-statshammer-core"
 version = "0.1.0"
 dependencies = [

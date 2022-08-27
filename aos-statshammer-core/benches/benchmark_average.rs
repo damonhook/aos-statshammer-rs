@@ -123,7 +123,7 @@ fn benchmark_average_damage_artificial(c: &mut Criterion) {
 
     for (name, weapon) in inputs.iter() {
         group.bench_with_input(BenchmarkId::from_parameter(name), weapon, |b, weapon| {
-            b.iter(|| AverageDamageProcessor::new(&weapon).average_damage())
+            b.iter(|| AverageDamageProcessor::new(weapon).average_damage())
         });
     }
     group.finish();
@@ -141,7 +141,7 @@ fn benchmark_average_damage_realistic(c: &mut Criterion) {
 
     for (name, weapon) in inputs.iter() {
         group.bench_with_input(BenchmarkId::from_parameter(name), weapon, |b, weapon| {
-            b.iter(|| AverageDamageProcessor::new(&weapon).average_damage())
+            b.iter(|| AverageDamageProcessor::new(weapon).average_damage())
         });
     }
     group.finish();

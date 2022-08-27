@@ -1,0 +1,12 @@
+[package]
+name = "aos-statshammer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aos-statshammer-core = { path = "../aos-statshammer-core" }
+
+[dev-dependencies]
+float_eq = "~1.0.0"

@@ -16,7 +16,7 @@ pub struct DiceNotation {
 }
 
 impl DiceNotation {
-    /// Return a `DiceNotation` given the `Dice` and constant components.
+    /// Return a `DiceNotation` given the [Dice] and constant components.
     ///
     /// # Arguments
     ///
@@ -374,33 +374,33 @@ mod tests {
     }
 
     #[test_case("d6" => Ok(
-        DiceNotation { 
-            additions: vec![Dice::new(6, 1)],
-            subtractions: vec![],
-            constant: 0
-        }
-    ) ; "d6")]
+            DiceNotation {
+                additions: vec![Dice::new(6, 1)],
+                subtractions: vec![],
+                constant: 0
+            }
+        ) ; "d6")]
     #[test_case("2d6" => Ok(
-        DiceNotation { 
-            additions: vec![Dice::new(6, 2)], 
-            subtractions: vec![], 
-            constant: 0
-        }
-    ) ; "2d6")]
+            DiceNotation {
+                additions: vec![Dice::new(6, 2)],
+                subtractions: vec![],
+                constant: 0
+            }
+        ) ; "2d6")]
     #[test_case("2d6 - d6 + 2" => Ok(
-        DiceNotation { 
-            additions: vec![Dice::new(6, 2)], 
-            subtractions: vec![Dice::new(6, 1)], 
-            constant: 2
-        }
-    ) ; "2d6 - d6 + 2")]
+            DiceNotation {
+                additions: vec![Dice::new(6, 2)],
+                subtractions: vec![Dice::new(6, 1)],
+                constant: 2
+            }
+        ) ; "2d6 - d6 + 2")]
     #[test_case("4d8 - 3" => Ok(
-        DiceNotation { 
-            additions: vec![Dice::new(8, 4)], 
-            subtractions: vec![], 
-            constant: -3
-        }
-    ) ; "4d8 - 3")]
+            DiceNotation {
+                additions: vec![Dice::new(8, 4)],
+                subtractions: vec![],
+                constant: -3
+            }
+        ) ; "4d8 - 3")]
     #[test_case("invalid" => matches Err(_) ; "invalid")]
     fn try_from_str(data: &str) -> Result<DiceNotation, &str> {
         DiceNotation::try_from(data)

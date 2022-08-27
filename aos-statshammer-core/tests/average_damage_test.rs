@@ -33,35 +33,35 @@ macro_rules! assert_processor_results_eq {
     };
 }
 
+macro_rules! assert_average_damage_eq {
+    ($weapon: expr, $expected: expr) => {
+        assert_processor_results_eq!(
+            AverageDamageProcessor::new(&$weapon).average_damage(),
+            $expected
+        );
+    };
+}
+
 #[test]
 fn average_damage_gotrek_axe() {
-    let weapon = data::gotrek_axe();
-    let processor = AverageDamageProcessor::new(&weapon);
-    let output = processor.average_damage();
-    assert_processor_results_eq!(
-        output,
+    assert_average_damage_eq!(
+        data::gotrek_axe(),
         processor_results!(9.407, 11.778, 14.148, 16.519, 18.889, 18.889, 18.889)
     );
 }
 
 #[test]
 fn average_hearthguard_berserkers_broadaxes() {
-    let weapon = data::hearthguard_berserkers_broadaxes();
-    let processor = AverageDamageProcessor::new(&weapon);
-    let output = processor.average_damage();
-    assert_processor_results_eq!(
-        output,
+    assert_average_damage_eq!(
+        data::hearthguard_berserkers_broadaxes(),
         processor_results!(6.074, 12.148, 18.222, 24.296, 30.370, 36.444, 36.444)
     );
 }
 
 #[test]
 fn average_chainrasp_horde() {
-    let weapon = data::chainrasp_horde();
-    let processor = AverageDamageProcessor::new(&weapon);
-    let output = processor.average_damage();
-    assert_processor_results_eq!(
-        output,
+    assert_average_damage_eq!(
+        data::chainrasp_horde(),
         processor_results!(0.875, 0.875, 1.75, 2.625, 3.5, 4.375, 5.25)
     );
 }

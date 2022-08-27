@@ -6,16 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rand = "*"
-regex = "*"
-lazy_static = "*"
-itertools = "*"
-num-traits = "*"
+rand = "~0.8.5"
+regex = "~1.6.0"
+lazy_static = "~1.4.0"
+itertools = "~0.10.3"
+num-traits = "~0.2.15"
 
 [dev-dependencies]
-test-case = "*"
-criterion = "*"
-float_eq = "*"
+test-case = "~2.2.1"
+criterion = "~0.3.6"
+float_eq = "~1.0.0"
 
 [[bench]]
 name = "all"

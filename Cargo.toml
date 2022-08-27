@@ -1,2 +1,2 @@
 [workspace]
-members = ["aos-statshammer-core"]
+members = ["aos-statshammer", "aos-statshammer-core"]

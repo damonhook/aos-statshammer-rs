@@ -19,7 +19,7 @@ impl<'a> AverageDamageProcessor<'a> {
         Self { weapon }
     }
 
-    /// Calculate the average damage for each save value for the given `weapon` and `abilities`.
+    /// Calculate the average damage for each save value for the given `weapon`.
     ///
     /// # Examples
     ///

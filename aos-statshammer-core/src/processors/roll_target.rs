@@ -21,7 +21,7 @@ impl Max for f32 {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RollTarget<T> {
     initial: T,
     pub modifier: T,

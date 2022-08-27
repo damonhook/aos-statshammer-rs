@@ -10,7 +10,7 @@ use super::Rollable;
 ///
 /// If you need a combination of different sided dice (or constants) then you will need to use a
 /// `DiceNotation` struct.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dice {
     pub sides: u32,
     pub quantity: u32,

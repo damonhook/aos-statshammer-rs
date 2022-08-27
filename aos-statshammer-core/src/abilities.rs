@@ -2,7 +2,7 @@ use crate::DiceNotation;
 
 use crate::{Characteristic, RollCharacteristic};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Reroll {
     pub characteristic: RollCharacteristic,
 }
@@ -12,7 +12,7 @@ impl Reroll {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RerollOnes {
     pub characteristic: RollCharacteristic,
 }
@@ -22,7 +22,7 @@ impl RerollOnes {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RerollFailed {
     pub characteristic: RollCharacteristic,
 }

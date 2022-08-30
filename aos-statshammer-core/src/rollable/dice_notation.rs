@@ -1,5 +1,7 @@
 use super::Dice;
 use super::Rollable;
+use serde::{Deserialize, Serialize, Serializer};
+use serde_json::Value;
 use std::fmt::Write as _; // import without risk of name clashing
 use std::{
     cmp, fmt,
@@ -8,7 +10,69 @@ use std::{
 
 /// A `DiceNotation` struct represents an expression containing various dice and constant values
 /// (e.g: `2d6 + d3 - 2`) while providing some convenience functions for them.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// # Examples
+///
+/// ## Basic example using the standard `new` constructor
+///
+/// ```
+/// use aos_statshammer_core::{Dice, DiceNotation};
+/// // Equivalent of 2d6 - d3 + 2
+/// let dn = DiceNotation::new(
+///     vec![Dice {sides: 6, quantity: 2}],
+///     vec![Dice {sides: 3, quantity: 1}],
+///     2
+/// );
+/// ```
+///
+/// ## Example using only a constant integer
+///
+/// ```
+/// use aos_statshammer_core::DiceNotation;
+///
+/// let dn = DiceNotation::from(3);
+/// assert_eq!(dn, DiceNotation {additions: vec![], subtractions: vec![], constant: 3});
+/// ```
+///
+/// ## Example using a single `Dice` struct instance
+///
+/// ```
+/// use aos_statshammer_core::{DiceNotation, Dice};
+///
+/// let dn = DiceNotation::from(Dice {sides: 6, quantity: 2});
+/// assert_eq!(
+///     dn,
+///     DiceNotation {
+///         additions: vec![Dice {sides: 6, quantity: 2}],
+///         subtractions: vec![],
+///         constant: 0
+///     }
+/// );
+/// ```
+/// ## Example valid notation string
+///
+/// ```
+/// use aos_statshammer_core::{DiceNotation, Dice};
+///
+/// let dn = DiceNotation::try_from("2d6 + d3 - 2");
+/// assert!(dn.is_ok());
+/// assert_eq!(dn, Ok(DiceNotation {
+///      additions: vec![Dice {sides: 6, quantity: 2}, Dice {sides: 3, quantity: 1}],
+///      subtractions: vec![],
+///      constant: -2,
+/// }));
+/// ```
+///
+/// ## Example invalid notation string
+///
+/// ```
+/// use aos_statshammer_core::DiceNotation;
+///
+/// let dn = DiceNotation::try_from("invalid");
+/// assert!(dn.is_err());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "Value")]
 pub struct DiceNotation {
     pub additions: Vec<Dice>,
     pub subtractions: Vec<Dice>,
@@ -106,16 +170,6 @@ impl Rollable for DiceNotation {
 }
 
 impl From<i32> for DiceNotation {
-    /// Create a `DiceNotation` from an integer
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use aos_statshammer_core::DiceNotation;
-    ///
-    /// let dn = DiceNotation::from(3);
-    /// assert_eq!(dn, DiceNotation {additions: vec![], subtractions: vec![], constant: 3});
-    /// ```
     fn from(constant: i32) -> Self {
         Self {
             additions: vec![],
@@ -126,23 +180,6 @@ impl From<i32> for DiceNotation {
 }
 
 impl From<Dice> for DiceNotation {
-    /// Create a `DiceNotation` from a single `Dice`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use aos_statshammer_core::{DiceNotation, Dice};
-    ///
-    /// let dn = DiceNotation::from(Dice {sides: 6, quantity: 2});
-    /// assert_eq!(
-    ///     dn,
-    ///     DiceNotation {
-    ///         additions: vec![Dice {sides: 6, quantity: 2}],
-    ///         subtractions: vec![],
-    ///         constant: 0
-    ///     }
-    /// );
-    /// ```
     fn from(dice: Dice) -> Self {
         Self {
             additions: vec![dice],
@@ -155,32 +192,6 @@ impl From<Dice> for DiceNotation {
 impl TryFrom<&str> for DiceNotation {
     type Error = &'static str;
 
-    /// Attempts to create a `DiceNotation` from a `&str`.
-    ///
-    /// # Examples
-    ///
-    /// ## Valid
-    ///
-    /// ```
-    /// use aos_statshammer_core::{DiceNotation, Dice};
-    ///
-    /// let dn = DiceNotation::try_from("2d6 + d3 - 2");
-    /// assert!(dn.is_ok());
-    /// assert_eq!(dn, Ok(DiceNotation {
-    ///      additions: vec![Dice {sides: 6, quantity: 2}, Dice {sides: 3, quantity: 1}],
-    ///      subtractions: vec![],
-    ///      constant: -2,
-    /// }));
-    /// ```
-    ///
-    /// ## Invalid
-    ///
-    /// ```
-    /// use aos_statshammer_core::DiceNotation;
-    ///
-    /// let dn = DiceNotation::try_from("invalid");
-    /// assert!(dn.is_err());
-    /// ```
     fn try_from(data: &str) -> Result<Self, Self::Error> {
         let mut additions: Vec<Dice> = vec![];
         let mut subtractions: Vec<Dice> = vec![];
@@ -299,6 +310,34 @@ impl AddAssign<i32> for DiceNotation {
 impl SubAssign<i32> for DiceNotation {
     fn sub_assign(&mut self, rhs: i32) {
         self.constant -= rhs;
+    }
+}
+
+impl Serialize for DiceNotation {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if self.additions.is_empty() && self.subtractions.is_empty() {
+            serializer.serialize_i32(self.constant)
+        } else {
+            serializer.serialize_str(&self.to_string())
+        }
+    }
+}
+
+impl TryFrom<Value> for DiceNotation {
+    type Error = &'static str;
+
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        match value {
+            Value::String(s) => Self::try_from(&*s),
+            Value::Number(n) => match n.as_i64() {
+                Some(x) => Ok(Self::from(x as i32)),
+                _ => Err("Invalid dice notation number provided"),
+            },
+            _ => Err("Invalid dice notation value provided"),
+        }
     }
 }
 

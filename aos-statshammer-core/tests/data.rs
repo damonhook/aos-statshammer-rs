@@ -9,15 +9,19 @@ pub fn gotrek_axe() -> Weapon {
         rend: 2,
         damage: DiceNotation::from(3),
         abilities: vec![
-            Ability::from(Reroll::new(RollChar::Hit)),
-            Ability::from(Reroll::new(RollChar::Wound)),
-            Ability::from(MortalWounds::new(
-                RollChar::Hit,
-                6,
-                true,
-                DiceNotation::try_from("d6").unwrap(),
-                true,
-            )),
+            Ability::from(Reroll {
+                characteristic: RollChar::Hit,
+            }),
+            Ability::from(Reroll {
+                characteristic: RollChar::Wound,
+            }),
+            Ability::from(MortalWounds {
+                characteristic: RollChar::Hit,
+                on: 6,
+                unmodified: true,
+                mortals: DiceNotation::try_from("d6").unwrap(),
+                in_addition: true,
+            }),
         ],
     }
 }

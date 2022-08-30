@@ -1,6 +1,8 @@
 use std::ops::AddAssign;
 
-#[derive(Debug)]
+use serde::Serialize;
+
+#[derive(Debug, Serialize)]
 pub struct SaveResult {
     pub save: u32,
     pub value: f32,
@@ -16,7 +18,7 @@ impl SaveResult {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct ProcessorResults {
     pub save_results: [SaveResult; 7],
 }

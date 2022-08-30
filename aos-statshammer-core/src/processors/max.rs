@@ -1,11 +1,13 @@
 use std::cmp;
 
-use crate::{abilities::*, Characteristic as Char, Rollable, Weapon};
+use crate::{abilities::*, Rollable, ValueCharacteristic as VChar, Weapon};
 
 // TODO:
 // - Collapse the separate iter().folds() used for each roll based ability into a single loop
 // - Roll leader extra attacks into max bonus
 
+/// A processor used for calculating the maximum damage for a given [Weapon].
+/// See the [`max_damage`](Self::max_damage) for example usage
 #[derive(Debug)]
 pub struct MaxDamageProcessor<'a> {
     weapon: &'a Weapon,
@@ -15,7 +17,6 @@ impl<'a> MaxDamageProcessor<'a> {
     pub fn new(weapon: &'a Weapon) -> Self {
         Self { weapon }
     }
-
 
     /// Calculate the maximum damage for the given `weapon`.
     ///
@@ -34,19 +35,22 @@ impl<'a> MaxDamageProcessor<'a> {
     /// ```
     pub fn max_damage(&self) -> u32 {
         let mut attacks = self.weapon.models
-            * cmp::max(self.weapon.attacks.max() + self.max_bonus(Char::Attacks), 0);
+            * cmp::max(
+                self.weapon.attacks.max() + self.max_bonus(VChar::Attacks),
+                0,
+            );
         attacks += self.max_leader_extra_attakcs();
         let rolls = attacks + self.max_exploding();
 
         let mut damage_per_wound =
-            cmp::max(self.weapon.damage.max() + self.max_bonus(Char::Damage), 0);
+            cmp::max(self.weapon.damage.max() + self.max_bonus(VChar::Damage), 0);
         damage_per_wound += self.max_mortal_wounds(damage_per_wound);
         rolls * damage_per_wound
     }
 
-    fn max_bonus(&self, characteristic: Char) -> u32 {
+    fn max_bonus(&self, characteristic: VChar) -> u32 {
         self.weapon.abilities.iter().fold(0, |acc, a| match a {
-            Ability::Bonus(x) if x.characteristic == characteristic => acc + x.value.max(),
+            Ability::Bonus(x) if x.characteristic == characteristic.into() => acc + x.value.max(),
             _ => acc,
         })
     }

@@ -1,13 +1,15 @@
 use crate::Unit;
 use aos_statshammer_core::processors::ProcessorResults;
+use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct AverageComparisonResult {
     pub name: String,
     pub averages: ProcessorResults,
     pub max: u32,
 }
 
+/// Used to run various comparisons between multiple [Units](Unit).
 pub struct UnitComparator<'a> {
     units: &'a [Unit],
 }

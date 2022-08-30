@@ -11,8 +11,12 @@ pub fn gotrek() -> Unit {
             rend: 2,
             damage: DiceNotation::from(3),
             abilities: vec![
-                Ability::from(Reroll::new(RollChar::Hit)),
-                Ability::from(Reroll::new(RollChar::Wound)),
+                Ability::from(Reroll {
+                    characteristic: RollChar::Hit,
+                }),
+                Ability::from(Reroll {
+                    characteristic: RollChar::Wound,
+                }),
                 Ability::from(MortalWounds {
                     characteristic: RollChar::Hit,
                     on: 6,

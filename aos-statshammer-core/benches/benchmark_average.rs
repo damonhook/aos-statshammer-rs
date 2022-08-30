@@ -1,6 +1,6 @@
 use aos_statshammer_core::{
     abilities::*, processors::AverageDamageProcessor, Characteristic as Char, Dice, DiceNotation,
-    RollCharacteristic as RollChar, Weapon,
+    RollCharacteristic as RChar, ValueCharacteristic as VChar, Weapon,
 };
 use criterion::*;
 use std::time::Duration;
@@ -32,8 +32,12 @@ mod inputs {
                 rend: 1,
                 damage: DiceNotation::from(2),
                 abilities: vec![
-                    Ability::from(Reroll::new(RollChar::Hit)),
-                    Ability::from(RerollOnes::new(RollChar::Wound)),
+                    Ability::from(Reroll {
+                        characteristic: RChar::Hit,
+                    }),
+                    Ability::from(RerollOnes {
+                        characteristic: RChar::Wound,
+                    }),
                 ],
             }
         }
@@ -47,25 +51,41 @@ mod inputs {
                 rend: 1,
                 damage: DiceNotation::try_from("d3 + 1").unwrap(),
                 abilities: vec![
-                    Ability::from(LeaderExtraAttacks::new(DiceNotation::from(1), 1)),
-                    Ability::from(Bonus::new(Char::Attacks, DiceNotation::from(Dice::d6()))),
-                    Ability::from(Bonus::new(Char::Roll(RollChar::Hit), DiceNotation::from(1))),
-                    Ability::from(Reroll::new(RollChar::Hit)),
-                    Ability::from(RerollOnes::new(RollChar::Wound)),
-                    Ability::from(Bonus::new(Char::Damage, DiceNotation::from(2))),
-                    Ability::from(Exploding::new(
-                        RollChar::Hit,
-                        6,
-                        true,
-                        DiceNotation::from(2),
-                    )),
-                    Ability::from(MortalWounds::new(
-                        RollChar::Hit,
-                        6,
-                        false,
-                        DiceNotation::from(6),
-                        true,
-                    )),
+                    Ability::from(LeaderExtraAttacks {
+                        value: DiceNotation::from(1),
+                        num_models: 1,
+                    }),
+                    Ability::from(Bonus {
+                        characteristic: Char::Value(VChar::Attacks),
+                        value: DiceNotation::from(Dice::d6()),
+                    }),
+                    Ability::from(Bonus {
+                        characteristic: Char::Roll(RChar::Hit),
+                        value: DiceNotation::from(2),
+                    }),
+                    Ability::from(Reroll {
+                        characteristic: RChar::Hit,
+                    }),
+                    Ability::from(RerollOnes {
+                        characteristic: RChar::Wound,
+                    }),
+                    Ability::from(Bonus {
+                        characteristic: Char::Value(VChar::Damage),
+                        value: DiceNotation::from(2),
+                    }),
+                    Ability::from(Exploding {
+                        characteristic: RChar::Hit,
+                        on: 6,
+                        unmodified: true,
+                        extra: DiceNotation::from(2),
+                    }),
+                    Ability::from(MortalWounds {
+                        characteristic: RChar::Hit,
+                        on: 6,
+                        unmodified: false,
+                        mortals: DiceNotation::from(6),
+                        in_addition: true,
+                    }),
                 ],
             }
         }
@@ -83,15 +103,19 @@ mod inputs {
                 rend: 2,
                 damage: DiceNotation::from(3),
                 abilities: vec![
-                    Ability::from(Reroll::new(RollChar::Hit)),
-                    Ability::from(Reroll::new(RollChar::Wound)),
-                    Ability::from(MortalWounds::new(
-                        RollChar::Hit,
-                        6,
-                        true,
-                        DiceNotation::try_from("d6").unwrap(),
-                        true,
-                    )),
+                    Ability::from(Reroll {
+                        characteristic: RChar::Hit,
+                    }),
+                    Ability::from(Reroll {
+                        characteristic: RChar::Wound,
+                    }),
+                    Ability::from(MortalWounds {
+                        characteristic: RChar::Hit,
+                        on: 6,
+                        unmodified: true,
+                        mortals: DiceNotation::try_from("d6").unwrap(),
+                        in_addition: true,
+                    }),
                 ],
             }
         }

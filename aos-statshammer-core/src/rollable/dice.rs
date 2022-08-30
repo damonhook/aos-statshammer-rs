@@ -1,16 +1,49 @@
 use lazy_static::lazy_static;
 use rand::Rng;
 use regex::Regex;
+use serde::{Serialize, Deserialize};
 use std::fmt;
 
 use super::Rollable;
+
+// TODO: Move to a lower sized int (e.g: u8)
 
 /// A `Dice` struct repesents a dice with a set number of sides. It can have any quantity of
 /// these dice sharing the same number of sides (e.g: equivalent of `d6` or `2d6`).
 ///
 /// If you need a combination of different sided dice (or constants) then you will need to use a
-/// `DiceNotation` struct.
+/// [DiceNotation](crate::DiceNotation) struct.
+/// 
+/// # Examples
+/// 
+/// ## Basic example using the `new` constructor
+/// 
+/// ```
+/// use aos_statshammer_core::Dice;
+/// // Equivalent of 2d6
+/// let dice = Dice::new(6, 2);
+/// ```
+/// 
+/// ## Example valid dice string
+///
+/// ```
+/// use aos_statshammer_core::Dice;
+///
+/// let dn = Dice::try_from("2d6");
+/// assert!(dn.is_ok());
+/// assert_eq!(dn, Ok(Dice {sides: 6, quantity: 2}));
+/// ```
+///
+/// ## Example invalid dice string
+///
+/// ```
+/// use aos_statshammer_core::Dice;
+///
+/// let dn = Dice::try_from("invalid");
+/// assert!(dn.is_err());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize)]
 pub struct Dice {
     pub sides: u32,
     pub quantity: u32,
@@ -67,28 +100,6 @@ impl Rollable for Dice {
 impl TryFrom<&str> for Dice {
     type Error = &'static str;
 
-    /// Attempts to create a `Dice` from a `&str`.
-    ///
-    /// # Examples
-    ///
-    /// ## Valid
-    ///
-    /// ```
-    /// use aos_statshammer_core::Dice;
-    ///
-    /// let dn = Dice::try_from("2d6");
-    /// assert!(dn.is_ok());
-    /// assert_eq!(dn, Ok(Dice {sides: 6, quantity: 2}));
-    /// ```
-    ///
-    /// ## Invalid
-    ///
-    /// ```
-    /// use aos_statshammer_core::Dice;
-    ///
-    /// let dn = Dice::try_from("invalid");
-    /// assert!(dn.is_err());
-    /// ```
     fn try_from(data: &str) -> Result<Self, Self::Error> {
         lazy_static! {
             static ref DICE_RE: Regex = Regex::new(r"^(\d+)?[dD](\d+)$").unwrap();

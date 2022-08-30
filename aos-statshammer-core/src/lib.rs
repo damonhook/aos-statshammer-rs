@@ -1,5 +1,5 @@
 mod characteristic;
-pub use characteristic::{Characteristic, RollCharacteristic};
+pub use characteristic::{Characteristic, RollCharacteristic, ValueCharacteristic};
 
 mod rollable;
 pub use rollable::{Dice, DiceNotation, Rollable};

@@ -1,87 +1,45 @@
+use serde::{Deserialize, Serialize};
+
 use crate::DiceNotation;
 
 use crate::{Characteristic, RollCharacteristic};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Reroll {
     pub characteristic: RollCharacteristic,
 }
-impl Reroll {
-    pub fn new(characteristic: RollCharacteristic) -> Self {
-        Self { characteristic }
-    }
-}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RerollOnes {
     pub characteristic: RollCharacteristic,
 }
-impl RerollOnes {
-    pub fn new(characteristic: RollCharacteristic) -> Self {
-        Self { characteristic }
-    }
-}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RerollFailed {
     pub characteristic: RollCharacteristic,
 }
-impl RerollFailed {
-    pub fn new(characteristic: RollCharacteristic) -> Self {
-        Self { characteristic }
-    }
-}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Bonus {
     pub characteristic: Characteristic,
     pub value: DiceNotation,
 }
-impl Bonus {
-    pub fn new(characteristic: Characteristic, value: DiceNotation) -> Self {
-        Self {
-            characteristic,
-            value,
-        }
-    }
-}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LeaderExtraAttacks {
     pub value: DiceNotation,
     pub num_models: u32,
 }
-impl LeaderExtraAttacks {
-    pub fn new(value: DiceNotation, num_models: u32) -> Self {
-        Self { value, num_models }
-    }
-}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Exploding {
     pub characteristic: RollCharacteristic,
     pub on: u32,
     pub unmodified: bool,
     pub extra: DiceNotation,
 }
-impl Exploding {
-    #[allow(unused)]
-    pub fn new(
-        characteristic: RollCharacteristic,
-        on: u32,
-        unmodified: bool,
-        extra: DiceNotation,
-    ) -> Self {
-        Self {
-            characteristic,
-            on,
-            unmodified,
-            extra,
-        }
-    }
-}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MortalWounds {
     pub characteristic: RollCharacteristic,
     pub on: u32,
@@ -89,26 +47,9 @@ pub struct MortalWounds {
     pub mortals: DiceNotation,
     pub in_addition: bool,
 }
-impl MortalWounds {
-    #[allow(unused)]
-    pub fn new(
-        characteristic: RollCharacteristic,
-        on: u32,
-        unmodified: bool,
-        mortals: DiceNotation,
-        in_addition: bool,
-    ) -> Self {
-        Self {
-            characteristic,
-            on,
-            unmodified,
-            mortals,
-            in_addition,
-        }
-    }
-}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value")]
 pub enum Ability {
     Reroll(Reroll),
     RerollFailed(RerollFailed),

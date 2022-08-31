@@ -8,16 +8,22 @@ macro_rules! assert_max_damage_eq {
 }
 
 #[test]
-fn average_damage_gotrek_axe() {
-    assert_max_damage_eq!(data::gotrek_axe(), 54);
+fn max_damage_gotrek() {
+    assert_max_damage_eq!(data::gotrek::zangrom_thaz(), 54);
 }
 
 #[test]
-fn average_hearthguard_berserkers_broadaxes() {
-    assert_max_damage_eq!(data::hearthguard_berserkers_broadaxes(), 82);
+fn max_hearthguard_berserkers() {
+    assert_max_damage_eq!(data::hearthguard_berserkers::broadaxes(), 82);
 }
 
 #[test]
-fn average_chainrasp_horde() {
-    assert_max_damage_eq!(data::chainrasp_horde(), 21);
+fn max_chainrasp_horde() {
+    assert_max_damage_eq!(data::chainrasp_horde::malignant_weapon(), 21);
+}
+
+#[test]
+fn max_mortek_guard() {
+    assert_max_damage_eq!(data::mortek_guard::nadirite_blade(), 38);
+    assert_max_damage_eq!(data::mortek_guard::soulcleaver_greatblade(), 2);
 }

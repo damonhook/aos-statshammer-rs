@@ -1,9 +1,10 @@
 use std::cmp;
 
-use crate::{abilities::*, Rollable, ValueCharacteristic as VChar, Weapon};
+use crate::{
+    abilities::*, RollCharacteristic as RollChar, Rollable, ValueCharacteristic as VChar, Weapon,
+};
 
 // TODO:
-// - Collapse the separate iter().folds() used for each roll based ability into a single loop
 // - Roll leader extra attacks into max bonus
 
 /// A processor used for calculating the maximum damage for a given [Weapon].
@@ -40,12 +41,20 @@ impl<'a> MaxDamageProcessor<'a> {
                 0,
             );
         attacks += self.max_leader_extra_attacks();
-        let rolls = attacks + self.max_exploding();
 
-        let mut damage_per_wound =
+        let hit_rolls = attacks + self.max_exploding(RollChar::Hit, attacks);
+        let (hit_mortals, hit_mortals_in_addition) =
+            self.max_mortal_wounds(RollChar::Hit, hit_rolls);
+
+        let wound_rolls = hit_rolls + self.max_exploding(RollChar::Wound, hit_rolls);
+        let (wound_mortals, wound_mortals_in_addition) =
+            self.max_mortal_wounds(RollChar::Wound, wound_rolls);
+
+        let damage_per_wound =
             cmp::max(self.weapon.damage.max() + self.max_bonus(VChar::Damage), 0);
-        damage_per_wound += self.max_mortal_wounds(damage_per_wound);
-        rolls * damage_per_wound
+        let damage =
+            (wound_rolls * damage_per_wound) + hit_mortals_in_addition + wound_mortals_in_addition;
+        cmp::max(damage, cmp::max(hit_mortals, wound_mortals))
     }
 
     fn max_bonus(&self, characteristic: VChar) -> u32 {
@@ -62,43 +71,42 @@ impl<'a> MaxDamageProcessor<'a> {
         })
     }
 
-    fn max_exploding(&self) -> u32 {
-        // TODO will need to take in characeristic
-        // (same char = acc + extra, diff char = acc + (acc * extra))
+    fn max_exploding(&self, phase: RollChar, current: u32) -> u32 {
         let total = self
             .weapon
             .abilities
             .iter()
             .fold(0, |acc, ability| match ability {
-                Ability::Exploding(a) => acc + (cmp::max(acc, 1) * a.extra.max()),
+                Ability::Exploding(a) if a.characteristic == phase => acc + a.extra.max(),
                 _ => acc,
             });
-        cmp::max(total, 0)
+        current * cmp::max(total, 0)
     }
 
-    fn max_mortal_wounds(&self, current: u32) -> u32 {
-        // TODO need to take in characteristic due to its interactions with the Exploding ability
-        self.weapon
-            .abilities
-            .iter()
-            .fold(0, |acc, ability| match ability {
-                Ability::MortalWounds(a) => {
-                    let max_mortals = a.mortals.max();
-                    if a.in_addition || max_mortals > current {
-                        acc + a.mortals.max()
-                    } else {
-                        acc
+    fn max_mortal_wounds(&self, phase: RollChar, current: u32) -> (u32, u32) {
+        let (total_mortals, mortals_in_addition) =
+            self.weapon
+                .abilities
+                .iter()
+                .fold((0, 0), |acc, ability| match ability {
+                    Ability::MortalWounds(a) if a.characteristic == phase => {
+                        let max_mortals = a.mortals.max();
+                        if a.in_addition {
+                            (acc.0 + max_mortals, acc.1 + max_mortals)
+                        } else {
+                            (acc.0 + max_mortals, acc.1)
+                        }
                     }
-                }
-                _ => acc,
-            })
+                    _ => acc,
+                });
+        (current * total_mortals, current * mortals_in_addition)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{DiceNotation, RollCharacteristic as RollChar};
+    use crate::DiceNotation;
     use test_case::test_case;
 
     macro_rules! basic_weapon {
@@ -188,7 +196,7 @@ mod tests {
     fn max_exploding_no_ability_found() {
         let weapon = basic_weapon!();
         let processor = MaxDamageProcessor::new(&weapon);
-        assert_eq!(processor.max_exploding(), 0);
+        assert_eq!(processor.max_exploding(RollChar::Hit, 1), 0);
     }
 
     #[test]
@@ -200,21 +208,19 @@ mod tests {
             extra: DiceNotation::try_from("d6").unwrap(),
         })]);
         let processor = MaxDamageProcessor::new(&weapon);
-        assert_eq!(processor.max_exploding(), 6);
+        assert_eq!(processor.max_exploding(RollChar::Hit, 1), 6);
     }
 
     #[test]
     fn max_mortal_wounds_no_ability_found() {
         let weapon = basic_weapon!();
         let processor = MaxDamageProcessor::new(&weapon);
-        assert_eq!(processor.max_mortal_wounds(4), 0);
+        assert_eq!(processor.max_mortal_wounds(RollChar::Hit, 4), (0, 0));
     }
 
-    #[test_case(4, false, 6 ; "mortals greater than current(4)")]
-    #[test_case(12, false, 0 ; "mortals less than current(12)")]
-    #[test_case(4, true, 6; "in addition to current(4)")]
-    #[test_case(12, true, 6; "in addition to current(12)")]
-    fn max_mortal_wounds_single_ability_found(current: u32, in_addition: bool, expected: u32) {
+    #[test_case(true, (24, 24); "in addition")]
+    #[test_case(false, (24, 0) ; "not in addition")]
+    fn max_mortal_wounds_single_ability_found(in_addition: bool, expected: (u32, u32)) {
         let weapon = basic_weapon!(vec![Ability::from(MortalWounds {
             characteristic: RollChar::Hit,
             on: 6,
@@ -223,13 +229,11 @@ mod tests {
             in_addition,
         })]);
         let processor = MaxDamageProcessor::new(&weapon);
-        assert_eq!(processor.max_mortal_wounds(current), expected);
+        assert_eq!(processor.max_mortal_wounds(RollChar::Hit, 4), expected);
     }
 
-    #[test_case(1, 10 ; "current(1)")]
-    #[test_case(4, 8 ; "current(4)")]
-    #[test_case(12, 2 ; "current(12)")]
-    fn max_mortal_wounds_multiple_abilities_found(current: u32, expected: u32) {
+    #[test]
+    fn max_mortal_wounds_multiple_abilities_found() {
         let weapon = basic_weapon!(vec![
             Ability::from(MortalWounds {
                 characteristic: RollChar::Hit,
@@ -254,6 +258,6 @@ mod tests {
             })
         ]);
         let processor = MaxDamageProcessor::new(&weapon);
-        assert_eq!(processor.max_mortal_wounds(current), expected);
+        assert_eq!(processor.max_mortal_wounds(RollChar::Hit, 4), (40, 8));
     }
 }

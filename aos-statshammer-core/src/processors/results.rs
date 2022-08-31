@@ -1,14 +1,15 @@
 use std::ops::AddAssign;
 
+#[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct SaveResult {
     pub save: u32,
     pub value: f32,
 }
 impl SaveResult {
-    #[allow(unused)]
     pub fn new(save: u32, value: f32) -> Self {
         Self { save, value }
     }
@@ -18,7 +19,8 @@ impl SaveResult {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct ProcessorResults {
     pub save_results: [SaveResult; 7],
 }

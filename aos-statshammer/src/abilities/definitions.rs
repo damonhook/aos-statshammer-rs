@@ -1,10 +1,12 @@
 use super::fields::*;
 use super::{Bonus, Exploding, LeaderExtraAttacks, MortalWounds, Reroll, RerollFailed, RerollOnes};
-use aos_statshammer_core::{ValueCharacteristic as VChar, RollCharacteristic as RChar};
+use aos_statshammer_core::{RollCharacteristic as RChar, ValueCharacteristic as VChar};
 
 pub trait AbilityDefinition {
     /// A display name for the Ability
     fn name() -> String;
+    /// A description for the Ability with placeholders for where field values would be substituded
+    fn description() -> String;
     /// A list of [Fields](Field) defining how the specific ability can configured
     fn fields() -> Vec<Field>;
 }
@@ -35,6 +37,10 @@ impl AbilityDefinition for Reroll {
         "Reroll".into()
     }
 
+    fn description() -> String {
+        "Reroll rolls for {characteristic}".into()
+    }
+
     fn fields() -> Vec<Field> {
         vec![Field::Choice(ChoiceField {
             field_id: "characteristic".into(),
@@ -48,6 +54,10 @@ impl AbilityDefinition for Reroll {
 impl AbilityDefinition for RerollFailed {
     fn name() -> String {
         "Reroll Failed".into()
+    }
+
+    fn description() -> String {
+        "Reroll failed rolls for {characteristic}".into()
     }
 
     fn fields() -> Vec<Field> {
@@ -65,6 +75,10 @@ impl AbilityDefinition for RerollOnes {
         "Reroll Ones".into()
     }
 
+    fn description() -> String {
+        "Reroll rolls of 1 for {characteristic}".into()
+    }
+
     fn fields() -> Vec<Field> {
         vec![Field::Choice(ChoiceField {
             field_id: "characteristic".into(),
@@ -78,6 +92,10 @@ impl AbilityDefinition for RerollOnes {
 impl AbilityDefinition for Bonus {
     fn name() -> String {
         "Bonus".into()
+    }
+
+    fn description() -> String {
+        "Add {value} to {characteristic}".into()
     }
 
     fn fields() -> Vec<Field> {
@@ -102,6 +120,10 @@ impl AbilityDefinition for LeaderExtraAttacks {
         "Leader Extra Attacks".into()
     }
 
+    fn description() -> String {
+        "Add {value} to the leader of this unit ({num_models} leaders)".into()
+    }
+
     fn fields() -> Vec<Field> {
         vec![
             Field::DiceNotation(DiceNotationField {
@@ -123,6 +145,10 @@ impl AbilityDefinition for LeaderExtraAttacks {
 impl AbilityDefinition for Exploding {
     fn name() -> String {
         "Exploding".into()
+    }
+
+    fn description() -> String {
+        "{unmodified} rolls of {on}+ {characteristic} result in {extra} additional".into()
     }
 
     fn fields() -> Vec<Field> {
@@ -156,6 +182,11 @@ impl AbilityDefinition for Exploding {
 impl AbilityDefinition for MortalWounds {
     fn name() -> String {
         "Mortal Wounds".into()
+    }
+
+    fn description() -> String {
+        "{unmodified} rolls of {on}+ {characteritic} result in {mortals} mortal wounds \
+        {in_addition}".into()
     }
 
     fn fields() -> Vec<Field> {

@@ -11,8 +11,12 @@ regex = "~1.6.0"
 lazy_static = "~1.4.0"
 itertools = "~0.10.3"
 num-traits = "~0.2.15"
-serde = { version = "*", features = ["derive"] }
-serde_json = "*"
+serde = { version = "~1.0.144", features = ["derive"], optional = true }
+serde_json = { version = "~1.0.85", optional = true }
+
+[features]
+serde = ["dep:serde", "dep:serde_json"]
+
 
 [dev-dependencies]
 test-case = "~2.2.1"

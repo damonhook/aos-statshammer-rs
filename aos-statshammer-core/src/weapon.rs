@@ -1,10 +1,12 @@
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::{abilities::*, DiceNotation, RollCharacteristic};
 
 /// A `Weapon` struct represents a single weapon profile that belongs to an Age of Sigmar unit and
 /// includes all of the profile characteristics for it.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Weapon {
     pub models: u32,
     pub attacks: DiceNotation,

@@ -1,11 +1,14 @@
 use super::Dice;
 use super::Rollable;
-use serde::{Deserialize, Serialize, Serializer};
-use serde_json::Value;
 use std::fmt::Write as _; // import without risk of name clashing
 use std::{
     cmp, fmt,
     ops::{AddAssign, SubAssign},
+};
+#[cfg(feature = "serde")]
+use {
+    serde::{Deserialize, Serialize, Serializer},
+    serde_json::Value,
 };
 
 /// A `DiceNotation` struct represents an expression containing various dice and constant values
@@ -71,8 +74,8 @@ use std::{
 /// let dn = DiceNotation::try_from("invalid");
 /// assert!(dn.is_err());
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(try_from = "Value")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Deserialize), serde(try_from = "Value"))]
 pub struct DiceNotation {
     pub additions: Vec<Dice>,
     pub subtractions: Vec<Dice>,
@@ -313,6 +316,7 @@ impl SubAssign<i32> for DiceNotation {
     }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for DiceNotation {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -326,6 +330,7 @@ impl Serialize for DiceNotation {
     }
 }
 
+#[cfg(feature = "serde")]
 impl TryFrom<Value> for DiceNotation {
     type Error = &'static str;
 

@@ -9,6 +9,7 @@ use serde::Serialize;
 pub struct AbilitySchema {
     id: String,
     name: String,
+    description: String,
     fields: Vec<Field>,
 }
 
@@ -22,6 +23,7 @@ macro_rules! ability_schema {
         AbilitySchema {
             id: $id.into(),
             name: $ability::name(),
+            description: $ability::description(),
             fields: $ability::fields(),
         }
     };

@@ -9,5 +9,8 @@ edition = "2021"
 aos-statshammer-core = { path = "../aos-statshammer-core" }
 serde = { version = "*", features = ["derive"] }
 
+[features]
+serde = ["aos-statshammer-core/serde"]
+
 [dev-dependencies]
 float_eq = "~1.0.0"

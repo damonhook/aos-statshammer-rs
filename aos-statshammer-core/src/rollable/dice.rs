@@ -1,10 +1,10 @@
+use super::Rollable;
 use lazy_static::lazy_static;
 use rand::Rng;
 use regex::Regex;
-use serde::{Serialize, Deserialize};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::fmt;
-
-use super::Rollable;
 
 // TODO: Move to a lower sized int (e.g: u8)
 
@@ -12,18 +12,18 @@ use super::Rollable;
 /// these dice sharing the same number of sides (e.g: equivalent of `d6` or `2d6`).
 ///
 /// If you need a combination of different sided dice (or constants) then you will need to use a
-/// [DiceNotation](crate::DiceNotation) struct.
-/// 
+/// [`DiceNotation`](crate::DiceNotation) struct.
+///
 /// # Examples
-/// 
+///
 /// ## Basic example using the `new` constructor
-/// 
+///
 /// ```
 /// use aos_statshammer_core::Dice;
 /// // Equivalent of 2d6
 /// let dice = Dice::new(6, 2);
 /// ```
-/// 
+///
 /// ## Example valid dice string
 ///
 /// ```
@@ -43,7 +43,7 @@ use super::Rollable;
 /// assert!(dn.is_err());
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Dice {
     pub sides: u32,
     pub quantity: u32,

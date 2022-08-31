@@ -2,10 +2,12 @@ use aos_statshammer_core::{
     processors::{AverageDamageProcessor, MaxDamageProcessor, ProcessorResults},
     Weapon,
 };
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 /// Defines a single Age of Sigmar unit which can contain any number of [Weapon] structs.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Unit {
     pub name: String,
     weapons: Vec<Weapon>,

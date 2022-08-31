@@ -1,6 +1,7 @@
+#[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct NumberField {
     pub field_id: String,
     pub display_name: String,
@@ -9,25 +10,28 @@ pub struct NumberField {
     pub default: Option<u32>,
 }
 
-#[derive(Serialize)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct DiceNotationField {
     pub field_id: String,
     pub display_name: String,
     pub default: Option<u32>,
 }
 
-#[derive(Serialize)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Choice {
-    value: String,
-    display_value: String
+    pub value: String,
+    pub display_value: String,
 }
 impl Choice {
     pub fn new(value: &str, display_value: &str) -> Self {
-        Self { value: value.into(), display_value: display_value.into() }
+        Self {
+            value: value.into(),
+            display_value: display_value.into(),
+        }
     }
 }
 
-#[derive(Serialize)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct ChoiceField {
     pub field_id: String,
     pub display_name: String,
@@ -35,7 +39,7 @@ pub struct ChoiceField {
     pub default: Option<String>,
 }
 
-#[derive(Serialize)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct RollField {
     pub field_id: String,
     pub display_name: String,
@@ -43,15 +47,14 @@ pub struct RollField {
     pub default: Option<u32>,
 }
 
-#[derive(Serialize)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct BooleanField {
     pub field_id: String,
     pub display_name: String,
     pub default: Option<bool>,
 }
 
-#[derive(Serialize)]
-#[serde(tag = "type")]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub enum Field {
     Number(NumberField),
     DiceNotation(DiceNotationField),

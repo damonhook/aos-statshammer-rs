@@ -1,9 +1,11 @@
 use std::fmt;
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// Enum representing the different characteristics that a `Weapon` can roll for
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
+/// Enum representing the different characteristics that a [`Weapon`](crate::Weapon) can roll for
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum RollCharacteristic {
     Hit,
     Wound,
@@ -18,8 +20,9 @@ impl fmt::Display for RollCharacteristic {
     }
 }
 
-/// Enum representing the different characteristics that a `Weapon` can have a value for
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
+/// Enum representing the different characteristics that a [`Weapon`](crate::Weapon) can have a value for
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ValueCharacteristic {
     Attacks,
     Rend,
@@ -36,10 +39,10 @@ impl fmt::Display for ValueCharacteristic {
     }
 }
 
-/// Enum representing the different characteristics that a `Weapon` can have.
-/// This is made up of [RollCharacteristic] and [ValueCharacteristic].
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
-#[serde(untagged)]
+/// Enum representing the different characteristics that a [`Weapon`](crate::Weapon) can have.
+/// This is made up of [`RollCharacteristic`] and [`ValueCharacteristic`].
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
 pub enum Characteristic {
     Value(ValueCharacteristic),
     Roll(RollCharacteristic),

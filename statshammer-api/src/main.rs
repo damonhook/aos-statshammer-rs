@@ -1,3 +1,7 @@
+//! Contains the REST based API for calculating the damage statistics for the supported games.
+//! This is a very light interface layer, with the logic being called from
+//! [`aos-statshammer`](aos_statshammer) and `warcry-statshammer` crates.
+
 use axum::{
     routing::{get, post},
     Router,

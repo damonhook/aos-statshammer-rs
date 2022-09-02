@@ -16,8 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build
-        run: cargo build --verbose
+        run: cargo build
       - name: Run clippy
         run: cargo clippy -- -D warnings
+      - uses: taiki-e/install-action@nextest
       - name: Run tests
-        run: cargo test --verbose
+        run: cargo nextest run && cargo test --doc

@@ -1,5 +1,6 @@
 use super::fields::*;
-use super::weapon::{Bonus, Exploding, LeaderExtraAttacks, MortalWounds, Reroll, RerollType};
+use super::weapon::{Bonus, Exploding, LeaderExtraAttacks, MortalWounds, Reroll};
+use super::RerollType;
 use aos_statshammer_core::{RollCharacteristic as RollChar, ValueCharacteristic as ValChar};
 
 pub trait AbilityDefinition {
@@ -95,7 +96,7 @@ impl AbilityDefinition for LeaderExtraAttacks {
     }
 
     fn description() -> String {
-        "Add {value} to the leader of this unit ({num_models} leaders)".into()
+        "Add {value} to the leader of this unit ({models} leaders)".into()
     }
 
     fn fields() -> Vec<Field> {
@@ -106,7 +107,7 @@ impl AbilityDefinition for LeaderExtraAttacks {
                 default: None,
             }),
             Field::Number(NumberField {
-                field_id: "num_models".into(),
+                field_id: "models".into(),
                 display_name: "Models".into(),
                 min_value: Some(1),
                 max_value: None,

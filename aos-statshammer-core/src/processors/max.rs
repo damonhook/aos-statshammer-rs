@@ -7,7 +7,6 @@ use crate::{
 
 // TODO:
 // - Roll leader extra attacks into max bonus
-// - Add target abilities
 
 /// A processor used for calculating the maximum damage for a given [Weapon].
 /// See the [`max_damage`](Self::max_damage) for example usage
@@ -70,7 +69,7 @@ impl<'a> MaxDamageProcessor<'a> {
 
     fn max_leader_extra_attacks(&self) -> u32 {
         self.weapon.abilities.iter().fold(0, |acc, a| match a {
-            Ability::LeaderExtraAttacks(x) => acc + (x.num_models * x.value.max()),
+            Ability::LeaderExtraAttacks(x) => acc + (x.models * x.value.max()),
             _ => acc,
         })
     }
@@ -141,7 +140,7 @@ mod tests {
     fn max_leader_extra_attacks_single_ability_found() {
         let weapon = basic_weapon!(vec![Ability::from(LeaderExtraAttacks {
             value: DiceNotation::try_from("d6").unwrap(),
-            num_models: 2,
+            models: 2,
         })]);
         let processor = MaxDamageProcessor::new(&weapon);
         assert_eq!(processor.max_leader_extra_attacks(), 12);
@@ -152,11 +151,11 @@ mod tests {
         let weapon = basic_weapon!(vec![
             Ability::from(LeaderExtraAttacks {
                 value: DiceNotation::try_from("d6").unwrap(),
-                num_models: 2,
+                models: 2,
             }),
             Ability::from(LeaderExtraAttacks {
                 value: DiceNotation::from(2),
-                num_models: 1,
+                models: 1,
             })
         ]);
         let processor = MaxDamageProcessor::new(&weapon);

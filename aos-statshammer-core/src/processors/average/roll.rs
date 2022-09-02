@@ -1,4 +1,4 @@
-use crate::abilities::weapon::RerollType;
+use crate::abilities::RerollType;
 
 use super::RollTarget;
 

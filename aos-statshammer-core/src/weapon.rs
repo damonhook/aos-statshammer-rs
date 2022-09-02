@@ -1,19 +1,38 @@
+use crate::{abilities::weapon::*, DiceNotation, RollCharacteristic};
+use derive_builder::Builder;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{abilities::weapon::*, DiceNotation, RollCharacteristic};
-
 /// A `Weapon` struct represents a single weapon profile that belongs to an Age of Sigmar unit and
 /// includes all of the profile characteristics for it.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Builder)]
+#[builder(derive(Debug, PartialEq, Eq))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Weapon {
+    /// The number of models that are using this weapon profile
+    #[builder(default = "1")]
     pub models: u32,
+
+    /// The number of attacks that are made be **each** model wielding this weapon
+    #[builder(try_setter, setter(into))]
     pub attacks: DiceNotation,
+
+    /// Attacks using this weapon must roll this value or higher to hit
     pub to_hit: u32,
+
+    /// Attacks using this weapon must roll this value or higher to wound
     pub to_wound: u32,
+
+    /// Attacks using this weapon will reduce the save of the opposing unit by this value
+    #[builder(default = "0")]
     pub rend: u32,
+
+    /// The amount of damage that will be inflicted by a **single** unsaved wound
+    #[builder(try_setter, setter(into))]
     pub damage: DiceNotation,
+
+    /// A list of abilities that this weapon contains
+    #[builder(default = "vec![]", setter(custom))]
     pub abilities: Vec<Ability>,
 }
 
@@ -47,6 +66,76 @@ impl Weapon {
         }
     }
 
+    /// Return a new [`WeaponBuilder`] used for creating a new [`Weapon`] instance.
+    ///
+    /// A note that there may be a slight performance penalty for using the builder, depending on
+    /// the number of abilities that you have.
+    ///
+    /// # Examples
+    ///
+    /// ## Valid Fully Qualified Weapon
+    ///
+    /// A general example with all fields defined, as well as, having some abilities added
+    ///
+    /// ```
+    /// # use aos_statshammer_core::{Weapon, RollCharacteristic};
+    /// # use aos_statshammer_core::abilities::{RerollType, weapon::{Bonus, Reroll}};
+    /// #
+    /// let weapon = Weapon::builder()
+    ///     .models(5)
+    ///     .attacks(2)
+    ///     .to_hit(3)
+    ///     .to_wound(4)
+    ///     .rend(1)
+    ///     .damage(2)
+    ///     .ability(Reroll {
+    ///         characteristic: RollCharacteristic::Hit,
+    ///         reroll_type: RerollType::Any,
+    ///     })
+    ///     .ability(Bonus {
+    ///         characteristic: RollCharacteristic::Hit.into(),
+    ///         value: 2.into(),
+    ///      })
+    ///     .build();
+    ///
+    /// assert!(matches!(weapon, Ok(Weapon { .. })));
+    /// ```
+    ///
+    /// ## Valid Using Defaults and TryFrom
+    ///
+    /// There are also defaults defined for `models`, `rend`, and `abilities`.
+    /// We can also use `try_attacks` and `try_damage` to use the `TryFrom` implementation for
+    /// [`DiceNotation`]
+    ///
+    /// ```
+    /// # use aos_statshammer_core::{Weapon, RollCharacteristic};
+    /// # use aos_statshammer_core::abilities::{RerollType, weapon::{Bonus, Reroll}};
+    /// #
+    /// let weapon = Weapon::builder()
+    ///     .try_attacks("d6").unwrap()
+    ///     .to_hit(3)
+    ///     .to_wound(4)
+    ///     .try_damage("2d3 + 2").unwrap()
+    ///     .build();
+    ///
+    /// assert!(matches!(weapon, Ok(Weapon { .. })));
+    /// ```
+    ///
+    /// ## Invalid Weapon
+    ///
+    /// If we do not define all of the fields which are required, you will get an error back.
+    ///
+    /// ```
+    /// # use aos_statshammer_core::{Weapon, RollCharacteristic};
+    /// # use aos_statshammer_core::abilities::{RerollType, weapon::{Bonus, Reroll}};
+    /// #
+    /// let weapon = Weapon::builder().models(5).build(); // Missing fields
+    /// assert!(weapon.is_err());
+    /// ```
+    pub fn builder() -> WeaponBuilder {
+        WeaponBuilder::default()
+    }
+
     pub fn reroll_ability(&self, phase: RollCharacteristic) -> Option<&Reroll> {
         self.abilities
             .iter()
@@ -58,9 +147,126 @@ impl Weapon {
     }
 }
 
+impl WeaponBuilder {
+    pub fn ability<T>(&mut self, value: T) -> &mut Self
+    where
+        T: Into<Ability>,
+    {
+        let av = &mut self.abilities;
+        match av {
+            Some(v) => v.push(value.into()),
+            _ => self.abilities = Some(vec![value.into()]),
+        }
+        self
+    }
+}
+
+// ========================================
+//                UNIT TESTS
+// ========================================
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::abilities::RerollType;
+
+    #[test]
+    fn weapon_builder_shortcut() {
+        let builder = Weapon::builder();
+        assert_eq!(builder, WeaponBuilder::default());
+    }
+
+    #[test]
+    fn weapon_builder_basic() {
+        let output = WeaponBuilder::default()
+            .models(5)
+            .attacks(DiceNotation::from(2))
+            .to_hit(3)
+            .to_wound(4)
+            .rend(1)
+            .damage(DiceNotation::from(2))
+            .build()
+            .unwrap();
+        assert_eq!(
+            output,
+            Weapon {
+                models: 5,
+                attacks: DiceNotation::from(2),
+                to_hit: 3,
+                to_wound: 4,
+                rend: 1,
+                damage: DiceNotation::from(2),
+                abilities: vec![]
+            }
+        )
+    }
+
+    #[test]
+    fn weapon_builder_with_into_and_abilities() {
+        let output = WeaponBuilder::default()
+            .models(5)
+            .attacks(2)
+            .to_hit(3)
+            .to_wound(4)
+            .rend(1)
+            .damage(2)
+            .ability(Reroll {
+                characteristic: RollCharacteristic::Hit,
+                reroll_type: RerollType::Any,
+            })
+            .ability(Bonus {
+                characteristic: RollCharacteristic::Hit.into(),
+                value: 2.into(),
+            })
+            .build()
+            .unwrap();
+        assert_eq!(
+            output,
+            Weapon {
+                models: 5,
+                attacks: DiceNotation::from(2),
+                to_hit: 3,
+                to_wound: 4,
+                rend: 1,
+                damage: DiceNotation::from(2),
+                abilities: vec![
+                    Ability::from(Reroll {
+                        characteristic: RollCharacteristic::Hit,
+                        reroll_type: RerollType::Any,
+                    }),
+                    Ability::from(Bonus {
+                        characteristic: RollCharacteristic::Hit.into(),
+                        value: 2.into(),
+                    })
+                ]
+            }
+        )
+    }
+
+    #[test]
+    fn weapon_builder_using_defaults_and_try_into() {
+        let output = WeaponBuilder::default()
+            .try_attacks("d6")
+            .unwrap()
+            .to_hit(3)
+            .to_wound(4)
+            .try_damage("2d6 + 1")
+            .unwrap()
+            .build()
+            .unwrap();
+        assert_eq!(
+            output,
+            Weapon {
+                models: 1,
+                attacks: DiceNotation::try_from("d6").unwrap(),
+                to_hit: 3,
+                to_wound: 4,
+                rend: 0,
+                damage: DiceNotation::try_from("2d6 + 1").unwrap(),
+                abilities: vec![]
+            }
+        )
+    }
 
     #[test]
     fn new() {

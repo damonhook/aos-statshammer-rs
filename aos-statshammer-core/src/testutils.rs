@@ -1,5 +1,8 @@
 pub mod weapons {
-    use crate::{abilities::weapon::*, DiceNotation, RollCharacteristic as RollChar, Weapon};
+    use crate::{
+        abilities::{weapon::*, RerollType},
+        DiceNotation, RollCharacteristic as RollChar, Weapon,
+    };
 
     pub mod gotrek {
         use super::*;
@@ -46,7 +49,7 @@ pub mod weapons {
                 damage: DiceNotation::from(2),
                 abilities: vec![Ability::from(LeaderExtraAttacks {
                     value: DiceNotation::from(1),
-                    num_models: 1,
+                    models: 1,
                 })],
             }
         }
@@ -65,7 +68,7 @@ pub mod weapons {
                 damage: 1.into(),
                 abilities: vec![Ability::from(LeaderExtraAttacks {
                     value: DiceNotation::from(1),
-                    num_models: 1,
+                    models: 1,
                 })],
             }
         }
@@ -85,7 +88,7 @@ pub mod weapons {
                 abilities: vec![
                     Ability::from(LeaderExtraAttacks {
                         value: 1.into(),
-                        num_models: 1,
+                        models: 1,
                     }),
                     Ability::from(Exploding {
                         characteristic: RollChar::Hit,

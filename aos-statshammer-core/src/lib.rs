@@ -20,6 +20,8 @@
 //! let weapon = Weapon::new(10, DiceNotation::from(2), 3, 4, 1, DiceNotation::from(2), vec![]);
 //! ```
 //!
+//! For more details see the documentation for [`Weapon`].
+//!
 //! ## Calculating average damage for a `Weapon`
 //!
 //! Let us take one of the [`Weapons`](Weapon) that we previously created and then use the
@@ -54,7 +56,7 @@ mod rollable;
 pub use rollable::{Dice, DiceNotation, Rollable};
 
 mod weapon;
-pub use weapon::Weapon;
+pub use weapon::{Weapon, WeaponBuilder};
 
 mod opponent;
 pub use opponent::Opponent;

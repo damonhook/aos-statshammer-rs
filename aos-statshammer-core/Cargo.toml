@@ -13,6 +13,7 @@ itertools = "~0.10.3"
 num-traits = "~0.2.15"
 serde = { version = "~1.0.144", features = ["derive"], optional = true }
 serde_json = { version = "~1.0.85", optional = true }
+derive_builder = "~0.11.2"
 
 [features]
 serde = ["dep:serde", "dep:serde_json"]

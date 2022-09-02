@@ -95,10 +95,7 @@ impl<'a> AverageDamageProcessor<'a> {
 
     fn save_phase(&self, wounds: f32, save: u32) -> f32 {
         let mut target = RollTarget::new(save as f32, 0.0, Some(2.0));
-        let has_ethereal = self
-            .opponent_abilities_iter()
-            .any(|ability| matches!(ability, OpponentAbility::Ethereal(_)));
-        if !has_ethereal {
+        if !self.opponent.map(|o| o.is_ethereal()).unwrap_or(false) {
             target -= self.weapon.rend as f32;
             target -= self.average_bonus(ValChar::Rend.into());
             target += self
@@ -114,7 +111,7 @@ impl<'a> AverageDamageProcessor<'a> {
                 Some(ability) => roll::reroll_probability(ability.reroll_type, result, target),
                 _ => 0.0,
             },
-            _ => 0.0
+            _ => 0.0,
         };
         result
     }
@@ -139,7 +136,7 @@ impl<'a> AverageDamageProcessor<'a> {
     /// Get the average number of extra attacks resulting from `LeaderExtraAttacks` abilities
     fn average_leader_extra_attacks(&self) -> f32 {
         self.weapon_abilities_iter().fold(0.0, |acc, a| match a {
-            Ability::LeaderExtraAttacks(x) => acc + ((x.num_models as f32) * x.value.average()),
+            Ability::LeaderExtraAttacks(x) => acc + ((x.models as f32) * x.value.average()),
             _ => acc,
         })
     }
@@ -176,17 +173,13 @@ impl<'a> AverageDamageProcessor<'a> {
     }
 
     fn average_ward_saves(&self, damage: f32) -> f32 {
-        let ability = self
-            .opponent_abilities_iter()
-            .filter_map(|ability| match ability {
-                OpponentAbility::Ward(a) => Some(a),
-                _ => None,
+        self.opponent
+            .and_then(|opponent| {
+                opponent
+                    .ward()
+                    .map(|a| damage * roll::probability(a.on as f32))
             })
-            .max_by(|&x, &y| x.on.cmp(&y.on));
-        match ability {
-            Some(a) => damage * roll::probability(a.on as f32),
-            _ => 0.0,
-        }
+            .unwrap_or(0.0)
     }
 
     fn weapon_abilities_iter(&self) -> impl Iterator<Item = &Ability> {
@@ -201,9 +194,9 @@ impl<'a> AverageDamageProcessor<'a> {
     }
 }
 
-// ======================================
-//               UNIT TESTS
-// ======================================
+// ========================================
+//                UNIT TESTS
+// ========================================
 
 #[cfg(test)]
 mod tests {
@@ -287,7 +280,7 @@ mod tests {
             }),
             Ability::from(LeaderExtraAttacks {
                 value: 1.into(),
-                num_models: 1,
+                models: 1,
             }),
         ]);
         let processor = AverageDamageProcessor::new(&weapon);
@@ -453,7 +446,7 @@ mod tests {
     fn average_leader_extra_attacks_single_ability_found() {
         let weapon = basic_weapon!(vec![Ability::from(LeaderExtraAttacks {
             value: DiceNotation::from(2),
-            num_models: 1,
+            models: 1,
         })]);
         let processor = AverageDamageProcessor::new(&weapon);
         assert_eq!(processor.average_leader_extra_attacks(), 2.0);
@@ -464,11 +457,11 @@ mod tests {
         let weapon = basic_weapon!(vec![
             Ability::from(LeaderExtraAttacks {
                 value: DiceNotation::from(2),
-                num_models: 1,
+                models: 1,
             }),
             Ability::from(LeaderExtraAttacks {
                 value: DiceNotation::try_from("d6").unwrap(),
-                num_models: 2,
+                models: 2,
             }),
         ]);
         let processor = AverageDamageProcessor::new(&weapon);

@@ -1,9 +1,7 @@
-use super::common::create_abilities_enum;
+use super::{create_abilities_enum, RerollType};
 use crate::{Characteristic, DiceNotation, RollCharacteristic};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-
-pub use super::common::RerollType;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -23,7 +21,7 @@ pub struct Bonus {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LeaderExtraAttacks {
     pub value: DiceNotation,
-    pub num_models: u32,
+    pub models: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

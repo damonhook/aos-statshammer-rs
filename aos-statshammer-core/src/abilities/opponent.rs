@@ -1,9 +1,7 @@
-use super::common::create_abilities_enum;
+use super::{create_abilities_enum, RerollType};
 use crate::DiceNotation;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-
-pub use super::common::RerollType;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

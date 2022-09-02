@@ -2,6 +2,7 @@ use aos_statshammer_core::{
     abilities::{
         opponent::{OpponentAbility, SaveBonus},
         weapon::*,
+        RerollType,
     },
     processors::AverageDamageProcessor,
     Characteristic as Char, Dice, DiceNotation, Opponent, RollCharacteristic as RollChar,
@@ -60,7 +61,7 @@ mod inputs {
                 abilities: vec![
                     Ability::from(LeaderExtraAttacks {
                         value: DiceNotation::from(1),
-                        num_models: 1,
+                        models: 1,
                     }),
                     Ability::from(Bonus {
                         characteristic: Char::Value(ValChar::Attacks),
@@ -141,7 +142,7 @@ mod inputs {
                 damage: DiceNotation::from(2),
                 abilities: vec![Ability::from(LeaderExtraAttacks {
                     value: DiceNotation::from(1),
-                    num_models: 1,
+                    models: 1,
                 })],
             }
         }

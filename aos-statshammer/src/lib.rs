@@ -28,8 +28,11 @@
 //! ## Creating Units
 //!
 //! ```
-//! use aos_statshammer::{abilities::weapon::*, DiceNotation, RollCharacteristic, Unit, Weapon};
-//!
+//! # use aos_statshammer::{
+//! #   abilities::{RerollType, weapon::*},
+//! #   DiceNotation, RollCharacteristic, Unit, Weapon
+//! # };
+//! #
 //! let chainrasp_horde = Unit::new(
 //!     "Chainrasp Horde",
 //!     vec![Weapon {
@@ -41,14 +44,17 @@
 //!         damage: 1.into(),
 //!         abilities: vec![Ability::from(LeaderExtraAttacks {
 //!             value: DiceNotation::from(1),
-//!             num_models: 1,
+//!             models: 1,
 //!         })],
 //!     }],
 //! );
 //! ```
 //!
 //! ```
-//! # use aos_statshammer::{abilities::weapon::*, DiceNotation, RollCharacteristic, Unit, Weapon};
+//! # use aos_statshammer::{
+//! #   abilities::{RerollType, weapon::*},
+//! #   DiceNotation, RollCharacteristic, Unit, Weapon
+//! # };
 //! #
 //! let gotrek = Unit::new(
 //!     "Gotrek",
@@ -85,7 +91,10 @@
 //! Let us take the `gotrek` and `chainrasp_horde` units we made eariler and do a comparison.
 //!
 //! ```
-//! # use aos_statshammer::{abilities::weapon::*, DiceNotation, RollCharacteristic, Unit, Weapon};
+//! # use aos_statshammer::{
+//! #   abilities::{RerollType, weapon::*},
+//! #   DiceNotation, RollCharacteristic, Unit, Weapon
+//! # };
 //! use aos_statshammer::UnitComparator;
 //!
 //! # let chainrasp_horde = Unit::new(
@@ -99,7 +108,7 @@
 //! #         damage: 1.into(),
 //! #         abilities: vec![Ability::from(LeaderExtraAttacks {
 //! #             value: DiceNotation::from(1),
-//! #             num_models: 1,
+//! #             models: 1,
 //! #         })],
 //! #     }],
 //! # );

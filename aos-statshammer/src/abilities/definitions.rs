@@ -1,6 +1,6 @@
 use super::fields::*;
-use super::{Bonus, Exploding, LeaderExtraAttacks, MortalWounds, Reroll, RerollFailed, RerollOnes};
-use aos_statshammer_core::{RollCharacteristic as RChar, ValueCharacteristic as VChar};
+use super::weapon::{Bonus, Exploding, LeaderExtraAttacks, MortalWounds, Reroll, RerollType};
+use aos_statshammer_core::{RollCharacteristic as RollChar, ValueCharacteristic as ValChar};
 
 pub trait AbilityDefinition {
     /// A display name for the Ability
@@ -14,11 +14,11 @@ pub trait AbilityDefinition {
 macro_rules! characteristic_choices {
     () => {
         vec![
-            Choice::new(&VChar::Attacks.to_string(), "Attacks"),
-            Choice::new(&RChar::Hit.to_string(), "To Hit"),
-            Choice::new(&RChar::Wound.to_string(), "To Wound"),
-            Choice::new(&VChar::Rend.to_string(), "Rend"),
-            Choice::new(&VChar::Damage.to_string(), "Damage"),
+            Choice::new(&ValChar::Attacks.to_string(), "Attacks"),
+            Choice::new(&RollChar::Hit.to_string(), "To Hit"),
+            Choice::new(&RollChar::Wound.to_string(), "To Wound"),
+            Choice::new(&ValChar::Rend.to_string(), "Rend"),
+            Choice::new(&ValChar::Damage.to_string(), "Damage"),
         ]
     };
 }
@@ -26,8 +26,8 @@ macro_rules! characteristic_choices {
 macro_rules! roll_characteristic_choices {
     () => {
         vec![
-            Choice::new(&RChar::Hit.to_string(), "To Hit"),
-            Choice::new(&RChar::Wound.to_string(), "To Wound"),
+            Choice::new(&RollChar::Hit.to_string(), "To Hit"),
+            Choice::new(&RollChar::Wound.to_string(), "To Wound"),
         ]
     };
 }
@@ -38,54 +38,28 @@ impl AbilityDefinition for Reroll {
     }
 
     fn description() -> String {
-        "Reroll rolls for {characteristic}".into()
+        "Reroll {reroll_type} for {characteristic}".into()
     }
 
     fn fields() -> Vec<Field> {
-        vec![Field::Choice(ChoiceField {
-            field_id: "characteristic".into(),
-            display_name: "Characteristic".into(),
-            choices: roll_characteristic_choices!(),
-            default: None,
-        })]
-    }
-}
-
-impl AbilityDefinition for RerollFailed {
-    fn name() -> String {
-        "Reroll Failed".into()
-    }
-
-    fn description() -> String {
-        "Reroll failed rolls for {characteristic}".into()
-    }
-
-    fn fields() -> Vec<Field> {
-        vec![Field::Choice(ChoiceField {
-            field_id: "characteristic".into(),
-            display_name: "Characteristic".into(),
-            choices: roll_characteristic_choices!(),
-            default: None,
-        })]
-    }
-}
-
-impl AbilityDefinition for RerollOnes {
-    fn name() -> String {
-        "Reroll Ones".into()
-    }
-
-    fn description() -> String {
-        "Reroll rolls of 1 for {characteristic}".into()
-    }
-
-    fn fields() -> Vec<Field> {
-        vec![Field::Choice(ChoiceField {
-            field_id: "characteristic".into(),
-            display_name: "Characteristic".into(),
-            choices: roll_characteristic_choices!(),
-            default: None,
-        })]
+        vec![
+            Field::Choice(ChoiceField {
+                field_id: "characteristic".into(),
+                display_name: "Characteristic".into(),
+                choices: roll_characteristic_choices!(),
+                default: None,
+            }),
+            Field::Choice(ChoiceField {
+                field_id: "reroll_type".into(),
+                display_name: "Reroll Type".into(),
+                choices: vec![
+                    Choice::new(&RerollType::Any.to_string(), "Any Roll"),
+                    Choice::new(&RerollType::Failed.to_string(), "Failed Rolls"),
+                    Choice::new(&RerollType::Ones.to_string(), "Rolls of 1"),
+                ],
+                default: None,
+            }),
+        ]
     }
 }
 
@@ -186,7 +160,8 @@ impl AbilityDefinition for MortalWounds {
 
     fn description() -> String {
         "{unmodified} rolls of {on}+ {characteritic} result in {mortals} mortal wounds \
-        {in_addition}".into()
+        {in_addition}"
+            .into()
     }
 
     fn fields() -> Vec<Field> {

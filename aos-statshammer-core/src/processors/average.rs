@@ -1,8 +1,10 @@
 use super::{roll_target::RollTarget, ProcessorResults};
 use crate::{
-    abilities::*, Characteristic as Char, RollCharacteristic as RChar, Rollable,
-    ValueCharacteristic as VChar, Weapon,
+    abilities::{opponent::OpponentAbility, weapon::*},
+    Characteristic as Char, Opponent, RollCharacteristic as RollChar, Rollable,
+    ValueCharacteristic as ValChar, Weapon,
 };
+mod roll;
 
 // TODO:
 // - Collapse the separate iter().folds() used for each roll based ability into a single loop
@@ -13,11 +15,20 @@ use crate::{
 #[derive(Debug)]
 pub struct AverageDamageProcessor<'a> {
     weapon: &'a Weapon,
+    opponent: Option<&'a Opponent>,
 }
 
 impl<'a> AverageDamageProcessor<'a> {
     pub fn new(weapon: &'a Weapon) -> Self {
-        Self { weapon }
+        Self {
+            weapon,
+            opponent: None,
+        }
+    }
+
+    pub fn opponent(mut self, opponent: &'a Opponent) -> Self {
+        self.opponent = Some(opponent);
+        self
     }
 
     /// Calculate the average damage for each save value for the given `weapon`.
@@ -39,8 +50,8 @@ impl<'a> AverageDamageProcessor<'a> {
         let mut results = ProcessorResults::new();
 
         let attacks = self.average_attacks();
-        let average_hits = self.roll_phase(attacks, RChar::Hit, &mut results);
-        let average_wounds = self.roll_phase(average_hits, RChar::Wound, &mut results);
+        let average_hits = self.roll_phase(attacks, RollChar::Hit, &mut results);
+        let average_wounds = self.roll_phase(average_hits, RollChar::Wound, &mut results);
 
         for mut save_result in results.save_results.iter_mut() {
             save_result.value +=
@@ -51,7 +62,7 @@ impl<'a> AverageDamageProcessor<'a> {
 
     fn average_attacks(&self) -> f32 {
         let mut attacks_per_model = self.weapon.attacks.average();
-        attacks_per_model += self.average_bonus(VChar::Attacks.into());
+        attacks_per_model += self.average_bonus(ValChar::Attacks.into());
 
         let mut attacks = (self.weapon.models as f32) * attacks_per_model;
         attacks += self.average_leader_extra_attacks();
@@ -59,15 +70,19 @@ impl<'a> AverageDamageProcessor<'a> {
         attacks
     }
 
-    fn roll_phase(&self, base: f32, phase: RChar, results: &mut ProcessorResults) -> f32 {
+    fn roll_phase(&self, base: f32, phase: RollChar, results: &mut ProcessorResults) -> f32 {
         let initial = match phase {
-            RChar::Hit => self.weapon.to_hit as f32,
-            RChar::Wound => self.weapon.to_wound as f32,
+            RollChar::Hit => self.weapon.to_hit as f32,
+            RollChar::Wound => self.weapon.to_wound as f32,
         };
         let mut target = RollTarget::new(initial, 0.0, Some(2.0));
         target += self.average_bonus(Char::Roll(phase));
-        let base = base + self.average_rerolls(phase, base, target);
-        let mut phase_result = base * roll_probability(target.modified());
+        let base = base
+            + match self.weapon.reroll_ability(phase) {
+                Some(ability) => roll::reroll_probability(ability.reroll_type, base, target),
+                _ => 0.0,
+            };
+        let mut phase_result = base * roll::probability(target.modified());
 
         phase_result += self.average_exploding(phase, base, target);
 
@@ -80,21 +95,42 @@ impl<'a> AverageDamageProcessor<'a> {
 
     fn save_phase(&self, wounds: f32, save: u32) -> f32 {
         let mut target = RollTarget::new(save as f32, 0.0, Some(2.0));
-        target -= self.weapon.rend as f32;
-        target -= self.average_bonus(VChar::Rend.into());
-        wounds * (inverse_roll_probability(target.modified()))
+        let has_ethereal = self
+            .opponent_abilities_iter()
+            .any(|ability| matches!(ability, OpponentAbility::Ethereal(_)));
+        if !has_ethereal {
+            target -= self.weapon.rend as f32;
+            target -= self.average_bonus(ValChar::Rend.into());
+            target += self
+                .opponent_abilities_iter()
+                .fold(0.0, |acc, ability| match ability {
+                    OpponentAbility::SaveBonus(a) => acc + a.value.average(),
+                    _ => acc,
+                });
+        }
+        let mut result = wounds * (roll::inverse_probability(target.modified()));
+        result += match self.opponent {
+            Some(o) => match o.reroll_ability() {
+                Some(ability) => roll::reroll_probability(ability.reroll_type, result, target),
+                _ => 0.0,
+            },
+            _ => 0.0
+        };
+        result
     }
 
     fn damage_phase(&self, wounds: f32) -> f32 {
         let mut damage_per_wound = self.weapon.damage.average();
-        damage_per_wound += self.average_bonus(VChar::Damage.into());
-        wounds * damage_per_wound
+        damage_per_wound += self.average_bonus(ValChar::Damage.into());
+        let mut damage = wounds * damage_per_wound;
+        damage -= self.average_ward_saves(damage);
+        damage
     }
 
     /// Get the average bonus to a given `characteristic` based on the `Bonus` abilities present
     /// for said `characteristic`
     fn average_bonus(&self, characteristic: Char) -> f32 {
-        self.weapon.abilities.iter().fold(0.0, |acc, a| match a {
+        self.weapon_abilities_iter().fold(0.0, |acc, a| match a {
             Ability::Bonus(x) if x.characteristic == characteristic => acc + x.value.average(),
             _ => acc,
         })
@@ -102,29 +138,19 @@ impl<'a> AverageDamageProcessor<'a> {
 
     /// Get the average number of extra attacks resulting from `LeaderExtraAttacks` abilities
     fn average_leader_extra_attacks(&self) -> f32 {
-        self.weapon.abilities.iter().fold(0.0, |acc, a| match a {
+        self.weapon_abilities_iter().fold(0.0, |acc, a| match a {
             Ability::LeaderExtraAttacks(x) => acc + ((x.num_models as f32) * x.value.average()),
             _ => acc,
         })
     }
 
-    /// Get the average number of rerolls for a given `characteristic`
-    fn average_rerolls(&self, phase: RChar, base: f32, target: RollTarget<f32>) -> f32 {
-        match self.weapon.reroll_ability(phase) {
-            Some(Ability::Reroll(_)) => base * inverse_roll_probability(target.modified()),
-            Some(Ability::RerollFailed(_)) => base * inverse_roll_probability(target.unmodified()),
-            Some(Ability::RerollOnes(_)) => base / 6.0,
-            _ => 0.0,
-        }
-    }
-
     /// Get the average extra value resulting from any `Exploding` ability found for the
     /// given `characteristic`.
-    fn average_exploding(&self, phase: RChar, base: f32, target: RollTarget<f32>) -> f32 {
-        self.weapon.abilities.iter().fold(0.0, |acc, a| match a {
+    fn average_exploding(&self, phase: RollChar, base: f32, target: RollTarget<f32>) -> f32 {
+        self.weapon_abilities_iter().fold(0.0, |acc, a| match a {
             Ability::Exploding(a) if a.characteristic == phase => {
                 let ability_target = RollTarget::new(a.on as f32, target.modifier, Some(2.0));
-                let ability_probability = roll_probability(ability_target.value(a.unmodified));
+                let ability_probability = roll::probability(ability_target.value(a.unmodified));
                 acc + base * ability_probability * a.extra.average()
             }
             _ => acc,
@@ -134,33 +160,45 @@ impl<'a> AverageDamageProcessor<'a> {
     /// Get the average damage that resulting from any `MortalWounds` abilities for the given
     /// `characteristic`, it also returns the base reduction if applicable.
     /// Returned tuple is in order of `(damage, base_reduction)`.
-    fn mortal_wounds(&self, phase: RChar, base: f32, target: RollTarget<f32>) -> (f32, f32) {
-        self.weapon
-            .abilities
-            .iter()
+    fn mortal_wounds(&self, phase: RollChar, base: f32, target: RollTarget<f32>) -> (f32, f32) {
+        self.weapon_abilities_iter()
             .fold((0.0, 0.0), |acc, a| match a {
                 Ability::MortalWounds(a) if a.characteristic == phase => {
                     let ability_target = RollTarget::new(a.on as f32, target.modifier, Some(2.0));
-                    let num_mortals = base * roll_probability(ability_target.value(a.unmodified));
-                    let damage = num_mortals * a.mortals.average();
+                    let num_mortals = base * roll::probability(ability_target.value(a.unmodified));
+                    let mut damage = num_mortals * a.mortals.average();
+                    damage -= self.average_ward_saves(damage);
                     let base_reduction = if a.in_addition { 0.0 } else { num_mortals };
                     (acc.0 + damage, acc.1.max(base_reduction))
                 }
                 _ => acc,
             })
     }
-}
 
-fn roll_probability(target: f32) -> f32 {
-    if target > 7.0 {
-        0.0
-    } else {
-        ((7.0 - target) / 6.0).clamp(0.0, 1.0)
+    fn average_ward_saves(&self, damage: f32) -> f32 {
+        let ability = self
+            .opponent_abilities_iter()
+            .filter_map(|ability| match ability {
+                OpponentAbility::Ward(a) => Some(a),
+                _ => None,
+            })
+            .max_by(|&x, &y| x.on.cmp(&y.on));
+        match ability {
+            Some(a) => damage * roll::probability(a.on as f32),
+            _ => 0.0,
+        }
     }
-}
 
-fn inverse_roll_probability(target: f32) -> f32 {
-    1.0 - roll_probability(target)
+    fn weapon_abilities_iter(&self) -> impl Iterator<Item = &Ability> {
+        self.weapon.abilities.iter()
+    }
+
+    fn opponent_abilities_iter(&self) -> impl Iterator<Item = &OpponentAbility> {
+        match self.opponent {
+            Some(o) => o.abilities.iter(),
+            _ => [].iter(),
+        }
+    }
 }
 
 // ======================================
@@ -169,39 +207,12 @@ fn inverse_roll_probability(target: f32) -> f32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::{processors::SaveResult, DiceNotation};
-
     use super::*;
+    use crate::{processors::SaveResult, DiceNotation};
     use float_eq::assert_float_eq;
     use test_case::test_case;
 
     static PRECISION: f32 = 0.000_5; // Approximately 3 decimal places
-
-    #[test_case(1.0, 1.0    ; "0+")]
-    #[test_case(1.0, 1.0    ; "1+")]
-    #[test_case(2.0, 0.833  ; "2+")]
-    #[test_case(3.0, 0.667  ; "3+")]
-    #[test_case(4.0, 0.5    ; "4+")]
-    #[test_case(5.0, 0.333  ; "5+")]
-    #[test_case(6.0, 0.167  ; "6+")]
-    #[test_case(7.0, 0.0    ; "7+")]
-    fn roll_probability_for_target(target: f32, expected: f32) {
-        let output = roll_probability(target);
-        assert_float_eq!(output, expected, abs <= 0.0005);
-    }
-
-    #[test_case(1.0, 0.0    ; "0-")]
-    #[test_case(1.0, 0.0    ; "1-")]
-    #[test_case(2.0, 0.167  ; "2-")]
-    #[test_case(3.0, 0.333  ; "3-")]
-    #[test_case(4.0, 0.5    ; "4-")]
-    #[test_case(5.0, 0.667  ; "5-")]
-    #[test_case(6.0, 0.833  ; "6-")]
-    #[test_case(7.0, 1.0    ; "7-")]
-    fn inverse_roll_probability_for_target(target: f32, expected: f32) {
-        let output = inverse_roll_probability(target);
-        assert_float_eq!(output, expected, abs <= PRECISION);
-    }
 
     macro_rules! basic_weapon {
         () => {
@@ -271,7 +282,7 @@ mod tests {
     fn average_attacks_with_abilities() {
         let weapon = basic_weapon!(vec![
             Ability::from(Bonus {
-                characteristic: VChar::Attacks.into(),
+                characteristic: ValChar::Attacks.into(),
                 value: 1.into(),
             }),
             Ability::from(LeaderExtraAttacks {
@@ -283,9 +294,9 @@ mod tests {
         assert_float_eq!(processor.average_attacks(), 31.0, abs <= PRECISION);
     }
 
-    #[test_case(RChar::Hit, 1.333 ; "hit")]
-    #[test_case(RChar::Wound, 1.0 ; "wound")]
-    fn roll_phase_no_abilities(phase: RChar, expected: f32) {
+    #[test_case(RollChar::Hit, 1.333 ; "hit")]
+    #[test_case(RollChar::Wound, 1.0 ; "wound")]
+    fn roll_phase_no_abilities(phase: RollChar, expected: f32) {
         let weapon = basic_weapon!();
         let processor = AverageDamageProcessor::new(&weapon);
         let mut results = ProcessorResults::new();
@@ -297,16 +308,16 @@ mod tests {
         assert_processor_results_eq!(results, ProcessorResults::new());
     }
 
-    #[test_case(RChar::Hit, 1.667 ; "hit")]
-    #[test_case(RChar::Wound, 1.333 ; "wound")]
-    fn roll_phase_with_bonus_abilities(phase: RChar, expected: f32) {
+    #[test_case(RollChar::Hit, 1.667 ; "hit")]
+    #[test_case(RollChar::Wound, 1.333 ; "wound")]
+    fn roll_phase_with_bonus_abilities(phase: RollChar, expected: f32) {
         let weapon = basic_weapon!(vec![
             Ability::from(Bonus {
-                characteristic: Char::Roll(RChar::Hit),
+                characteristic: Char::Roll(RollChar::Hit),
                 value: 2.into(),
             }),
             Ability::from(Bonus {
-                characteristic: Char::Roll(RChar::Wound),
+                characteristic: Char::Roll(RollChar::Wound),
                 value: 1.into(),
             }),
         ]);
@@ -323,7 +334,7 @@ mod tests {
     #[test]
     fn roll_phase_with_exploding_abilities() {
         let weapon = basic_weapon!(vec![Ability::from(Exploding {
-            characteristic: RChar::Hit,
+            characteristic: RollChar::Hit,
             on: 6,
             unmodified: true,
             extra: 2.into(),
@@ -331,7 +342,7 @@ mod tests {
         let processor = AverageDamageProcessor::new(&weapon);
         let mut results = ProcessorResults::new();
         assert_float_eq!(
-            processor.roll_phase(2.0, RChar::Hit, &mut results),
+            processor.roll_phase(2.0, RollChar::Hit, &mut results),
             2.0,
             abs <= PRECISION
         );
@@ -341,7 +352,7 @@ mod tests {
     #[test]
     fn roll_phase_with_mortal_wounds_abilities() {
         let weapon = basic_weapon!(vec![Ability::from(MortalWounds {
-            characteristic: RChar::Hit,
+            characteristic: RollChar::Hit,
             on: 6,
             unmodified: true,
             mortals: 2.into(),
@@ -350,7 +361,7 @@ mod tests {
         let processor = AverageDamageProcessor::new(&weapon);
         let mut results = ProcessorResults::new();
         assert_float_eq!(
-            processor.roll_phase(2.0, RChar::Hit, &mut results),
+            processor.roll_phase(2.0, RollChar::Hit, &mut results),
             1.0,
             abs <= PRECISION
         );
@@ -367,7 +378,7 @@ mod tests {
     #[test]
     fn save_phase_with_abilities() {
         let weapon = basic_weapon!(vec![Ability::from(Bonus {
-            characteristic: VChar::Rend.into(),
+            characteristic: ValChar::Rend.into(),
             value: 1.into(),
         })]);
         let processor = AverageDamageProcessor::new(&weapon);
@@ -377,7 +388,7 @@ mod tests {
     #[test]
     fn damage_phase_no_abilities() {
         let weapon = basic_weapon!(vec![Ability::from(Bonus {
-            characteristic: VChar::Rend.into(),
+            characteristic: ValChar::Rend.into(),
             value: 1.into(),
         })]);
         let processor = AverageDamageProcessor::new(&weapon);
@@ -387,7 +398,7 @@ mod tests {
     #[test]
     fn damage_phase_with_abilities() {
         let weapon = basic_weapon!(vec![Ability::from(Bonus {
-            characteristic: VChar::Damage.into(),
+            characteristic: ValChar::Damage.into(),
             value: DiceNotation::try_from("d6").unwrap(),
         })]);
         let processor = AverageDamageProcessor::new(&weapon);
@@ -398,37 +409,37 @@ mod tests {
     fn average_bonus_no_ability_found() {
         let weapon = basic_weapon!();
         let processor = AverageDamageProcessor::new(&weapon);
-        assert_eq!(processor.average_bonus(VChar::Attacks.into()), 0.0);
+        assert_eq!(processor.average_bonus(ValChar::Attacks.into()), 0.0);
     }
 
     #[test]
     fn average_bonus_single_ability_found() {
         let weapon = basic_weapon!(vec![Ability::from(Bonus {
-            characteristic: VChar::Attacks.into(),
+            characteristic: ValChar::Attacks.into(),
             value: DiceNotation::from(2),
         })]);
         let processor = AverageDamageProcessor::new(&weapon);
-        assert_eq!(processor.average_bonus(VChar::Attacks.into()), 2.0);
+        assert_eq!(processor.average_bonus(ValChar::Attacks.into()), 2.0);
     }
 
     #[test]
     fn average_bonus_multiple_abilities_found() {
         let weapon = basic_weapon!(vec![
             Ability::from(Bonus {
-                characteristic: VChar::Attacks.into(),
+                characteristic: ValChar::Attacks.into(),
                 value: DiceNotation::from(2),
             }),
             Ability::from(Bonus {
-                characteristic: VChar::Attacks.into(),
+                characteristic: ValChar::Attacks.into(),
                 value: DiceNotation::try_from("d6").unwrap(),
             }),
             Ability::from(Bonus {
-                characteristic: VChar::Damage.into(), // Test that it correctly filters by characteristic
+                characteristic: ValChar::Damage.into(), // Test that it correctly filters by characteristic
                 value: DiceNotation::from(2),
             }),
         ]);
         let processor = AverageDamageProcessor::new(&weapon);
-        assert_eq!(processor.average_bonus(VChar::Attacks.into()), 5.5);
+        assert_eq!(processor.average_bonus(ValChar::Attacks.into()), 5.5);
     }
 
     #[test]
@@ -469,7 +480,7 @@ mod tests {
         let weapon = basic_weapon!();
         let processor = AverageDamageProcessor::new(&weapon);
         assert_eq!(
-            processor.average_exploding(RChar::Hit, 2.0, RollTarget::from(3.0)),
+            processor.average_exploding(RollChar::Hit, 2.0, RollTarget::from(3.0)),
             0.0
         );
     }
@@ -478,14 +489,14 @@ mod tests {
     #[test_case(false, 1.333 ; "modified")]
     fn exploding_single_ability_found(unmodified: bool, expected: f32) {
         let weapon = basic_weapon!(vec![Ability::from(Exploding {
-            characteristic: RChar::Hit,
+            characteristic: RollChar::Hit,
             on: 6,
             unmodified,
             extra: DiceNotation::from(2),
         })]);
         let processor = AverageDamageProcessor::new(&weapon);
         assert_float_eq!(
-            processor.average_exploding(RChar::Hit, 2.0, RollTarget::new(3.0, 1.0, None)),
+            processor.average_exploding(RollChar::Hit, 2.0, RollTarget::new(3.0, 1.0, None)),
             expected,
             abs <= PRECISION
         );
@@ -495,13 +506,13 @@ mod tests {
     fn exploding_multiple_abilities_found() {
         let weapon = basic_weapon!(vec![
             Ability::from(Exploding {
-                characteristic: RChar::Hit,
+                characteristic: RollChar::Hit,
                 on: 6,
                 unmodified: true,
                 extra: DiceNotation::from(2),
             }),
             Ability::from(Exploding {
-                characteristic: RChar::Hit,
+                characteristic: RollChar::Hit,
                 on: 5,
                 unmodified: true,
                 extra: DiceNotation::try_from("d6").unwrap(),
@@ -509,7 +520,7 @@ mod tests {
         ]);
         let processor = AverageDamageProcessor::new(&weapon);
         assert_float_eq!(
-            processor.average_exploding(RChar::Hit, 2.0, RollTarget::new(3.0, 1.0, None)),
+            processor.average_exploding(RollChar::Hit, 2.0, RollTarget::new(3.0, 1.0, None)),
             3.0,
             abs <= PRECISION
         );
@@ -520,7 +531,7 @@ mod tests {
         let weapon = basic_weapon!();
         let processor = AverageDamageProcessor::new(&weapon);
         assert_eq!(
-            processor.mortal_wounds(RChar::Hit, 2.0, RollTarget::from(3.0)),
+            processor.mortal_wounds(RollChar::Hit, 2.0, RollTarget::from(3.0)),
             (0.0, 0.0)
         );
     }
@@ -535,7 +546,7 @@ mod tests {
         expected: (f32, f32),
     ) {
         let weapon = basic_weapon!(vec![Ability::from(MortalWounds {
-            characteristic: RChar::Hit,
+            characteristic: RollChar::Hit,
             on: 6,
             unmodified,
             mortals: DiceNotation::from(2),
@@ -543,7 +554,7 @@ mod tests {
         })]);
         let processor = AverageDamageProcessor::new(&weapon);
         let (damage, base_reduction) =
-            processor.mortal_wounds(RChar::Hit, 2.0, RollTarget::new(3.0, 1.0, None));
+            processor.mortal_wounds(RollChar::Hit, 2.0, RollTarget::new(3.0, 1.0, None));
         assert_float_eq!(damage, expected.0, abs <= PRECISION);
         assert_float_eq!(base_reduction, expected.1, abs <= PRECISION);
     }
@@ -552,14 +563,14 @@ mod tests {
     fn mortal_wounds_multiple_abilities_found() {
         let weapon = basic_weapon!(vec![
             Ability::from(MortalWounds {
-                characteristic: RChar::Hit,
+                characteristic: RollChar::Hit,
                 on: 6,
                 unmodified: true,
                 mortals: DiceNotation::from(2),
                 in_addition: false,
             }),
             Ability::from(MortalWounds {
-                characteristic: RChar::Hit,
+                characteristic: RollChar::Hit,
                 on: 5,
                 unmodified: true,
                 mortals: DiceNotation::try_from("d6").unwrap(),
@@ -568,7 +579,7 @@ mod tests {
         ]);
         let processor = AverageDamageProcessor::new(&weapon);
         let (damage, base_reduction) =
-            processor.mortal_wounds(RChar::Hit, 2.0, RollTarget::new(3.0, 1.0, None));
+            processor.mortal_wounds(RollChar::Hit, 2.0, RollTarget::new(3.0, 1.0, None));
         assert_float_eq!(damage, 3.0, abs <= PRECISION);
         assert_float_eq!(base_reduction, 0.667, abs <= PRECISION);
     }

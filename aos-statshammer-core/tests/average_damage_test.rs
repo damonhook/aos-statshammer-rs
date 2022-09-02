@@ -1,6 +1,5 @@
-mod data;
-use aos_statshammer_core::processors::*;
-use float_eq::*;
+use aos_statshammer_core::{processors::*, testutils::weapons};
+use float_eq::assert_float_eq;
 
 static PRECISION: f32 = 0.000_5; // Approximately 3 decimal places
 
@@ -45,7 +44,7 @@ macro_rules! assert_average_damage_eq {
 #[test]
 fn average_damage_gotrek() {
     assert_average_damage_eq!(
-        data::gotrek::zangrom_thaz(),
+        weapons::gotrek::zangrom_thaz(),
         processor_results!(9.407, 11.778, 14.148, 16.519, 18.889, 18.889, 18.889)
     );
 }
@@ -53,7 +52,7 @@ fn average_damage_gotrek() {
 #[test]
 fn average_hearthguard_berserkers() {
     assert_average_damage_eq!(
-        data::hearthguard_berserkers::broadaxes(),
+        weapons::hearthguard_berserkers::broadaxes(),
         processor_results!(6.074, 12.148, 18.222, 24.296, 30.370, 36.444, 36.444)
     );
 }
@@ -61,7 +60,7 @@ fn average_hearthguard_berserkers() {
 #[test]
 fn average_chainrasp_horde() {
     assert_average_damage_eq!(
-        data::chainrasp_horde::malignant_weapon(),
+        weapons::chainrasp_horde::malignant_weapon(),
         processor_results!(0.875, 0.875, 1.75, 2.625, 3.5, 4.375, 5.25)
     );
 }
@@ -69,11 +68,11 @@ fn average_chainrasp_horde() {
 #[test]
 fn average_mortek_guard() {
     assert_average_damage_eq!(
-        data::mortek_guard::nadirite_blade(),
+        weapons::mortek_guard::nadirite_blade(),
         processor_results!(1.319, 2.639, 3.958, 5.278, 6.597, 7.917, 7.917)
     );
     assert_average_damage_eq!(
-        data::mortek_guard::soulcleaver_greatblade(),
+        weapons::mortek_guard::soulcleaver_greatblade(),
         processor_results!(0.148, 0.296, 0.444, 0.593, 0.741, 0.889, 0.889)
     );
 }

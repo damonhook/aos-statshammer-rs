@@ -1,7 +1,4 @@
-use aos_statshammer::abilities::{
-    fields::Field, AbilityDefinition, Bonus, Exploding, LeaderExtraAttacks, MortalWounds, Reroll,
-    RerollFailed, RerollOnes,
-};
+use aos_statshammer::abilities::{fields::Field, weapon, AbilityDefinition};
 use axum::Json;
 use serde::Serialize;
 
@@ -15,30 +12,28 @@ pub struct AbilitySchema {
 
 #[derive(Serialize)]
 pub struct AbilitiesResponse {
-    abilities: Vec<AbilitySchema>,
+    weapon: Vec<AbilitySchema>,
 }
 
 macro_rules! ability_schema {
-    ($id: expr, $ability: ident) => {
+    ($id: expr, $ability: ty) => {
         AbilitySchema {
             id: $id.into(),
-            name: $ability::name(),
-            description: $ability::description(),
-            fields: $ability::fields(),
+            name: <$ability>::name(),
+            description: <$ability>::description(),
+            fields: <$ability>::fields(),
         }
     };
 }
 
 pub async fn get_abilities() -> Json<AbilitiesResponse> {
     Json(AbilitiesResponse {
-        abilities: vec![
-            ability_schema!("reroll", Reroll),
-            ability_schema!("reroll_failed", RerollFailed),
-            ability_schema!("reroll_ones", RerollOnes),
-            ability_schema!("bonus", Bonus),
-            ability_schema!("leader_extra_attacks", LeaderExtraAttacks),
-            ability_schema!("exploding", Exploding),
-            ability_schema!("mortal_wounds", MortalWounds),
+        weapon: vec![
+            ability_schema!("Reroll", weapon::Reroll),
+            ability_schema!("Bonus", weapon::Bonus),
+            ability_schema!("LeaderExtraAttacks", weapon::LeaderExtraAttacks),
+            ability_schema!("Exploding", weapon::Exploding),
+            ability_schema!("MortalWounds", weapon::MortalWounds),
         ],
     })
 }

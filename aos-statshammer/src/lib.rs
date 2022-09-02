@@ -28,7 +28,7 @@
 //! ## Creating Units
 //!
 //! ```
-//! use aos_statshammer::{abilities::*, DiceNotation, RollCharacteristic, Unit, Weapon};
+//! use aos_statshammer::{abilities::weapon::*, DiceNotation, RollCharacteristic, Unit, Weapon};
 //!
 //! let chainrasp_horde = Unit::new(
 //!     "Chainrasp Horde",
@@ -48,7 +48,7 @@
 //! ```
 //!
 //! ```
-//! # use aos_statshammer::{abilities::*, DiceNotation, RollCharacteristic, Unit, Weapon};
+//! # use aos_statshammer::{abilities::weapon::*, DiceNotation, RollCharacteristic, Unit, Weapon};
 //! #
 //! let gotrek = Unit::new(
 //!     "Gotrek",
@@ -62,9 +62,11 @@
 //!         abilities: vec![
 //!             Ability::from(Reroll {
 //!                 characteristic: RollCharacteristic::Hit,
+//!                 reroll_type: RerollType::Any,
 //!             }),
 //!             Ability::from(Reroll {
 //!                 characteristic: RollCharacteristic::Wound,
+//!                 reroll_type: RerollType::Any,
 //!             }),
 //!             Ability::from(MortalWounds {
 //!                 characteristic: RollCharacteristic::Hit,
@@ -83,7 +85,7 @@
 //! Let us take the `gotrek` and `chainrasp_horde` units we made eariler and do a comparison.
 //!
 //! ```
-//! # use aos_statshammer::{abilities::*, DiceNotation, RollCharacteristic, Unit, Weapon};
+//! # use aos_statshammer::{abilities::weapon::*, DiceNotation, RollCharacteristic, Unit, Weapon};
 //! use aos_statshammer::UnitComparator;
 //!
 //! # let chainrasp_horde = Unit::new(
@@ -113,9 +115,11 @@
 //! #         abilities: vec![
 //! #             Ability::from(Reroll {
 //! #                 characteristic: RollCharacteristic::Hit,
+//! #                 reroll_type: RerollType::Any,
 //! #             }),
 //! #             Ability::from(Reroll {
 //! #                 characteristic: RollCharacteristic::Wound,
+//! #                 reroll_type: RerollType::Any,
 //! #             }),
 //! #             Ability::from(MortalWounds {
 //! #                 characteristic: RollCharacteristic::Hit,

@@ -1,11 +1,13 @@
 use std::cmp;
 
 use crate::{
-    abilities::*, RollCharacteristic as RollChar, Rollable, ValueCharacteristic as VChar, Weapon,
+    abilities::weapon::*, RollCharacteristic as RollChar, Rollable, ValueCharacteristic as ValChar,
+    Weapon,
 };
 
 // TODO:
 // - Roll leader extra attacks into max bonus
+// - Add target abilities
 
 /// A processor used for calculating the maximum damage for a given [Weapon].
 /// See the [`max_damage`](Self::max_damage) for example usage
@@ -37,7 +39,7 @@ impl<'a> MaxDamageProcessor<'a> {
     pub fn max_damage(&self) -> u32 {
         let mut attacks = self.weapon.models
             * cmp::max(
-                self.weapon.attacks.max() + self.max_bonus(VChar::Attacks),
+                self.weapon.attacks.max() + self.max_bonus(ValChar::Attacks),
                 0,
             );
         attacks += self.max_leader_extra_attacks();
@@ -50,14 +52,16 @@ impl<'a> MaxDamageProcessor<'a> {
         let (wound_mortals, wound_mortals_in_addition) =
             self.max_mortal_wounds(RollChar::Wound, wound_rolls);
 
-        let damage_per_wound =
-            cmp::max(self.weapon.damage.max() + self.max_bonus(VChar::Damage), 0);
+        let damage_per_wound = cmp::max(
+            self.weapon.damage.max() + self.max_bonus(ValChar::Damage),
+            0,
+        );
         let damage =
             (wound_rolls * damage_per_wound) + hit_mortals_in_addition + wound_mortals_in_addition;
         cmp::max(damage, cmp::max(hit_mortals, wound_mortals))
     }
 
-    fn max_bonus(&self, characteristic: VChar) -> u32 {
+    fn max_bonus(&self, characteristic: ValChar) -> u32 {
         self.weapon.abilities.iter().fold(0, |acc, a| match a {
             Ability::Bonus(x) if x.characteristic == characteristic.into() => acc + x.value.max(),
             _ => acc,
@@ -163,33 +167,33 @@ mod tests {
     fn max_bonus_no_ability_found() {
         let weapon = basic_weapon!();
         let processor = MaxDamageProcessor::new(&weapon);
-        assert_eq!(processor.max_bonus(VChar::Attacks.into()), 0);
+        assert_eq!(processor.max_bonus(ValChar::Attacks.into()), 0);
     }
 
     #[test]
     fn max_bonus_single_ability_found() {
         let weapon = basic_weapon!(vec![Ability::from(Bonus {
-            characteristic: VChar::Attacks.into(),
+            characteristic: ValChar::Attacks.into(),
             value: DiceNotation::try_from("d6").unwrap(),
         })]);
         let processor = MaxDamageProcessor::new(&weapon);
-        assert_eq!(processor.max_bonus(VChar::Attacks.into()), 6);
+        assert_eq!(processor.max_bonus(ValChar::Attacks.into()), 6);
     }
 
     #[test]
     fn max_bonus_multiple_abilities_found() {
         let weapon = basic_weapon!(vec![
             Ability::from(Bonus {
-                characteristic: VChar::Attacks.into(),
+                characteristic: ValChar::Attacks.into(),
                 value: DiceNotation::try_from("d6").unwrap(),
             }),
             Ability::from(Bonus {
-                characteristic: VChar::Attacks.into(),
+                characteristic: ValChar::Attacks.into(),
                 value: DiceNotation::from(2),
             })
         ]);
         let processor = MaxDamageProcessor::new(&weapon);
-        assert_eq!(processor.max_bonus(VChar::Attacks.into()), 8);
+        assert_eq!(processor.max_bonus(ValChar::Attacks.into()), 8);
     }
 
     #[test]

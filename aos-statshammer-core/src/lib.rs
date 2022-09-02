@@ -56,5 +56,12 @@ pub use rollable::{Dice, DiceNotation, Rollable};
 mod weapon;
 pub use weapon::Weapon;
 
+mod opponent;
+pub use opponent::Opponent;
+
 pub mod abilities;
+
 pub mod processors;
+
+#[doc(hidden)]
+pub mod testutils;

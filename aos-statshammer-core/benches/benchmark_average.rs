@@ -1,6 +1,11 @@
 use aos_statshammer_core::{
-    abilities::*, processors::AverageDamageProcessor, Characteristic as Char, Dice, DiceNotation,
-    RollCharacteristic as RChar, ValueCharacteristic as VChar, Weapon,
+    abilities::{
+        opponent::{OpponentAbility, SaveBonus},
+        weapon::*,
+    },
+    processors::AverageDamageProcessor,
+    Characteristic as Char, Dice, DiceNotation, Opponent, RollCharacteristic as RollChar,
+    ValueCharacteristic as ValChar, Weapon,
 };
 use criterion::*;
 use std::time::Duration;
@@ -33,10 +38,12 @@ mod inputs {
                 damage: DiceNotation::from(2),
                 abilities: vec![
                     Ability::from(Reroll {
-                        characteristic: RChar::Hit,
+                        characteristic: RollChar::Hit,
+                        reroll_type: RerollType::Any,
                     }),
-                    Ability::from(RerollOnes {
-                        characteristic: RChar::Wound,
+                    Ability::from(Reroll {
+                        characteristic: RollChar::Wound,
+                        reroll_type: RerollType::Any,
                     }),
                 ],
             }
@@ -56,31 +63,33 @@ mod inputs {
                         num_models: 1,
                     }),
                     Ability::from(Bonus {
-                        characteristic: Char::Value(VChar::Attacks),
+                        characteristic: Char::Value(ValChar::Attacks),
                         value: DiceNotation::from(Dice::d6()),
                     }),
                     Ability::from(Bonus {
-                        characteristic: Char::Roll(RChar::Hit),
+                        characteristic: Char::Roll(RollChar::Hit),
                         value: DiceNotation::from(2),
                     }),
                     Ability::from(Reroll {
-                        characteristic: RChar::Hit,
+                        characteristic: RollChar::Hit,
+                        reroll_type: RerollType::Any,
                     }),
-                    Ability::from(RerollOnes {
-                        characteristic: RChar::Wound,
+                    Ability::from(Reroll {
+                        characteristic: RollChar::Wound,
+                        reroll_type: RerollType::Ones,
                     }),
                     Ability::from(Bonus {
-                        characteristic: Char::Value(VChar::Damage),
+                        characteristic: Char::Value(ValChar::Damage),
                         value: DiceNotation::from(2),
                     }),
                     Ability::from(Exploding {
-                        characteristic: RChar::Hit,
+                        characteristic: RollChar::Hit,
                         on: 6,
                         unmodified: true,
                         extra: DiceNotation::from(2),
                     }),
                     Ability::from(MortalWounds {
-                        characteristic: RChar::Hit,
+                        characteristic: RollChar::Hit,
                         on: 6,
                         unmodified: false,
                         mortals: DiceNotation::from(6),
@@ -104,13 +113,15 @@ mod inputs {
                 damage: DiceNotation::from(3),
                 abilities: vec![
                     Ability::from(Reroll {
-                        characteristic: RChar::Hit,
+                        characteristic: RollChar::Hit,
+                        reroll_type: RerollType::Any,
                     }),
                     Ability::from(Reroll {
-                        characteristic: RChar::Wound,
+                        characteristic: RollChar::Wound,
+                        reroll_type: RerollType::Any,
                     }),
                     Ability::from(MortalWounds {
-                        characteristic: RChar::Hit,
+                        characteristic: RollChar::Hit,
                         on: 6,
                         unmodified: true,
                         mortals: DiceNotation::try_from("d6").unwrap(),
@@ -144,10 +155,15 @@ fn benchmark_average_damage_artificial(c: &mut Criterion) {
         ("Just Rerolls", inputs::artificial::only_rerolls()),
         ("Large Mix", inputs::artificial::large_mix()),
     ];
+    let opponent = Opponent::new(vec![OpponentAbility::from(SaveBonus { value: 1.into() })]);
 
     for (name, weapon) in inputs.iter() {
         group.bench_with_input(BenchmarkId::from_parameter(name), weapon, |b, weapon| {
-            b.iter(|| AverageDamageProcessor::new(weapon).average_damage())
+            b.iter(|| {
+                AverageDamageProcessor::new(weapon)
+                    .opponent(&opponent)
+                    .average_damage()
+            })
         });
     }
     group.finish();

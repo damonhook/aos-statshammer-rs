@@ -1,7 +1,7 @@
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{abilities::*, DiceNotation, RollCharacteristic};
+use crate::{abilities::weapon::*, DiceNotation, RollCharacteristic};
 
 /// A `Weapon` struct represents a single weapon profile that belongs to an Age of Sigmar unit and
 /// includes all of the profile characteristics for it.
@@ -47,27 +47,14 @@ impl Weapon {
         }
     }
 
-    pub fn reroll_ability(&self, phase: RollCharacteristic) -> Option<&Ability> {
-        let find_reroll = || {
-            self.abilities.iter().find_map(|ability| match ability {
-                ab @ Ability::Reroll(x) if x.characteristic == phase => Some(ab),
+    pub fn reroll_ability(&self, phase: RollCharacteristic) -> Option<&Reroll> {
+        self.abilities
+            .iter()
+            .filter_map(|ability| match ability {
+                Ability::Reroll(a) if a.characteristic == phase => Some(a),
                 _ => None,
             })
-        };
-        let find_reroll_failed = || {
-            self.abilities.iter().find_map(|ability| match ability {
-                ab @ Ability::RerollFailed(x) if x.characteristic == phase => Some(ab),
-                _ => None,
-            })
-        };
-        let find_reroll_ones = || {
-            self.abilities.iter().find_map(|ability| match ability {
-                ab @ Ability::RerollOnes(x) if x.characteristic == phase => Some(ab),
-                _ => None,
-            })
-        };
-
-        find_reroll().or_else(|| find_reroll_failed().or_else(find_reroll_ones))
+            .max_by_key(|a| a.reroll_type)
     }
 }
 
@@ -121,7 +108,8 @@ mod tests {
     #[test]
     fn reroll_ability_no_matching_charcteristic() {
         let weapon = create_weapon!(vec![Ability::from(Reroll {
-            characteristic: RollCharacteristic::Wound
+            characteristic: RollCharacteristic::Wound,
+            reroll_type: RerollType::Any
         })]);
         assert_eq!(weapon.reroll_ability(RollCharacteristic::Hit), None);
     }
@@ -129,52 +117,61 @@ mod tests {
     #[test]
     fn reroll_ability_reroll_found() {
         let weapon = create_weapon!(vec![
-            Ability::from(RerollFailed {
-                characteristic: RollCharacteristic::Hit
-            }),
-            Ability::from(RerollOnes {
-                characteristic: RollCharacteristic::Hit
+            Ability::from(Reroll {
+                characteristic: RollCharacteristic::Hit,
+                reroll_type: RerollType::Failed
             }),
             Ability::from(Reroll {
-                characteristic: RollCharacteristic::Hit
+                characteristic: RollCharacteristic::Hit,
+                reroll_type: RerollType::Ones
+            }),
+            Ability::from(Reroll {
+                characteristic: RollCharacteristic::Hit,
+                reroll_type: RerollType::Any
             }),
         ]);
         assert_eq!(
             weapon.reroll_ability(RollCharacteristic::Hit),
-            Some(&Ability::from(Reroll {
-                characteristic: RollCharacteristic::Hit
-            }))
+            Some(&Reroll {
+                characteristic: RollCharacteristic::Hit,
+                reroll_type: RerollType::Any
+            })
         );
     }
 
     #[test]
     fn reroll_ability_reroll_failed_found() {
         let weapon = create_weapon!(vec![
-            Ability::from(RerollFailed {
-                characteristic: RollCharacteristic::Hit
+            Ability::from(Reroll {
+                characteristic: RollCharacteristic::Hit,
+                reroll_type: RerollType::Failed
             }),
-            Ability::from(RerollOnes {
-                characteristic: RollCharacteristic::Hit
+            Ability::from(Reroll {
+                characteristic: RollCharacteristic::Hit,
+                reroll_type: RerollType::Ones
             }),
         ]);
         assert_eq!(
             weapon.reroll_ability(RollCharacteristic::Hit),
-            Some(&Ability::from(RerollFailed {
-                characteristic: RollCharacteristic::Hit
-            }))
+            Some(&Reroll {
+                characteristic: RollCharacteristic::Hit,
+                reroll_type: RerollType::Failed,
+            })
         );
     }
 
     #[test]
     fn reroll_ability_reroll_ones_found() {
-        let weapon = create_weapon!(vec![Ability::from(RerollOnes {
-            characteristic: RollCharacteristic::Hit
+        let weapon = create_weapon!(vec![Ability::from(Reroll {
+            characteristic: RollCharacteristic::Hit,
+            reroll_type: RerollType::Ones
         })]);
         assert_eq!(
             weapon.reroll_ability(RollCharacteristic::Hit),
-            Some(&Ability::from(RerollOnes {
-                characteristic: RollCharacteristic::Hit
-            }))
+            Some(&Reroll {
+                characteristic: RollCharacteristic::Hit,
+                reroll_type: RerollType::Ones,
+            })
         );
     }
 }

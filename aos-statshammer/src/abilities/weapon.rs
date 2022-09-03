@@ -1,16 +1,7 @@
-use super::fields::*;
-use super::weapon::{Bonus, Exploding, LeaderExtraAttacks, MortalWounds, Reroll};
 use super::RerollType;
+use super::{fields::*, AbilityDefinition};
+pub use aos_statshammer_core::abilities::weapon::*;
 use aos_statshammer_core::{RollCharacteristic as RollChar, ValueCharacteristic as ValChar};
-
-pub trait AbilityDefinition {
-    /// A display name for the Ability
-    fn name() -> String;
-    /// A description for the Ability with placeholders for where field values would be substituded
-    fn description() -> String;
-    /// A list of [Fields](Field) defining how the specific ability can configured
-    fn fields() -> Vec<Field>;
-}
 
 macro_rules! characteristic_choices {
     () => {

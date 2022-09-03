@@ -1,4 +1,4 @@
-use aos_statshammer::abilities::{fields::Field, weapon, AbilityDefinition};
+use aos_statshammer::abilities::{fields::Field, opponent, weapon, AbilityDefinition};
 use axum::Json;
 use serde::Serialize;
 
@@ -13,6 +13,7 @@ pub struct AbilitySchema {
 #[derive(Serialize)]
 pub struct AbilitiesResponse {
     weapon: Vec<AbilitySchema>,
+    opponent: Vec<AbilitySchema>,
 }
 
 macro_rules! ability_schema {
@@ -34,6 +35,12 @@ pub async fn get_abilities() -> Json<AbilitiesResponse> {
             ability_schema!("LeaderExtraAttacks", weapon::LeaderExtraAttacks),
             ability_schema!("Exploding", weapon::Exploding),
             ability_schema!("MortalWounds", weapon::MortalWounds),
+        ],
+        opponent: vec![
+            ability_schema!("SaveReroll", opponent::SaveReroll),
+            ability_schema!("SaveBonus", opponent::SaveBonus),
+            ability_schema!("Ward", opponent::Ward),
+            ability_schema!("Ethereal", opponent::Ethereal),
         ],
     })
 }

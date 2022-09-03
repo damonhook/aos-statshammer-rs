@@ -7,6 +7,7 @@ pub struct NumberField {
     pub display_name: String,
     pub min_value: Option<u32>,
     pub max_value: Option<u32>,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if="Option::is_none"))]
     pub default: Option<u32>,
 }
 
@@ -14,6 +15,7 @@ pub struct NumberField {
 pub struct DiceNotationField {
     pub field_id: String,
     pub display_name: String,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if="Option::is_none"))]
     pub default: Option<u32>,
 }
 
@@ -36,6 +38,7 @@ pub struct ChoiceField {
     pub field_id: String,
     pub display_name: String,
     pub choices: Vec<Choice>,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if="Option::is_none"))]
     pub default: Option<String>,
 }
 
@@ -44,6 +47,7 @@ pub struct RollField {
     pub field_id: String,
     pub display_name: String,
     pub min_value: u32,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if="Option::is_none"))]
     pub default: Option<u32>,
 }
 
@@ -51,6 +55,7 @@ pub struct RollField {
 pub struct BooleanField {
     pub field_id: String,
     pub display_name: String,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if="Option::is_none"))]
     pub default: Option<bool>,
 }
 

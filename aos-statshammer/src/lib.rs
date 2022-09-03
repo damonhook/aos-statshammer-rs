@@ -141,7 +141,7 @@
 //! #     }],
 //! # );
 //! let units = [chainrasp_horde, gotrek];
-//! let output = UnitComparator::new(&units).compare_average_damage();
+//! let output = UnitComparator::new(&units, None).compare_average_damage();
 //! # assert_eq!(output.len(), 2);
 //! ```
 //!
@@ -157,7 +157,7 @@ pub use unit::Unit;
 
 // Re-export components needed for this lib
 pub use aos_statshammer_core::{
-    Characteristic, DiceNotation, RollCharacteristic, Rollable, Weapon,
+    Characteristic, DiceNotation, Opponent, RollCharacteristic, Rollable, Weapon,
 };
 
 mod compare;

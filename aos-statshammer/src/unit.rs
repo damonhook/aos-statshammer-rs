@@ -1,6 +1,6 @@
 use aos_statshammer_core::{
     processors::{AverageDamageProcessor, MaxDamageProcessor, ProcessorResults},
-    Weapon,
+    Opponent, Weapon,
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -22,10 +22,14 @@ impl Unit {
     }
 
     /// Calculate the average damage for all of the [Weapon] structs that belong to this unit.
-    pub fn average_damage(&self) -> ProcessorResults {
+    pub fn average_damage(&self, opponent: Option<&Opponent>) -> ProcessorResults {
         let mut results = ProcessorResults::new();
         for weapon in self.weapons.iter() {
-            let weapon_results = AverageDamageProcessor::new(weapon).average_damage();
+            let mut processor = AverageDamageProcessor::new(weapon);
+            if let Some(o) = opponent {
+                processor.opponent(o);
+            }
+            let weapon_results = processor.average_damage();
             results.merge(weapon_results);
         }
         results

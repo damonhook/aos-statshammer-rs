@@ -1,36 +1,6 @@
-use aos_statshammer_core::{processors::*, testutils::weapons};
+use aos_statshammer_core::processors::*;
+use aos_statshammer_core::{assert_processor_results_eq, processor_results, testutils::weapons};
 use float_eq::assert_float_eq;
-
-static PRECISION: f32 = 0.000_5; // Approximately 3 decimal places
-
-macro_rules! processor_results {
-    ($r1: expr, $r2: expr, $r3: expr, $r4: expr, $r5: expr, $r6: expr, $r7: expr) => {
-        ProcessorResults::from([
-            SaveResult::new(1, $r1),
-            SaveResult::new(2, $r2),
-            SaveResult::new(3, $r3),
-            SaveResult::new(4, $r4),
-            SaveResult::new(5, $r5),
-            SaveResult::new(6, $r6),
-            SaveResult::new(7, $r7),
-        ])
-    };
-}
-
-macro_rules! assert_processor_results_eq {
-    ($left: expr, $right: expr) => {
-        assert!(matches!($left, ProcessorResults { .. }));
-        assert_eq!($left.save_results.len(), $right.save_results.len());
-        for (index, right_result) in $right.save_results.iter().enumerate() {
-            assert_eq!($left.save_results[index].save, right_result.save);
-            assert_float_eq!(
-                $left.save_results[index].value,
-                right_result.value,
-                abs <= PRECISION
-            );
-        }
-    };
-}
 
 macro_rules! assert_average_damage_eq {
     ($weapon: expr, $expected: expr) => {

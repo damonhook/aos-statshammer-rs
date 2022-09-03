@@ -7,13 +7,13 @@ use axum::{
     Router,
 };
 mod abilities;
-mod units;
+mod comparisons;
 
 #[tokio::main]
 async fn main() {
     let aos_routes = Router::new()
         .route("/abilities", get(abilities::get_abilities))
-        .route("/compare/average", post(units::compare_average));
+        .route("/compare/average", post(comparisons::compare_average));
 
     let app = Router::new().nest("/aos", aos_routes);
 

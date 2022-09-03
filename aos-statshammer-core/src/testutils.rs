@@ -1,3 +1,50 @@
+#[doc(hidden)]
+#[macro_export]
+macro_rules! processor_results {
+    ($r_all: expr) => {
+        ProcessorResults::from([
+            SaveResult::new(1, $r_all),
+            SaveResult::new(2, $r_all),
+            SaveResult::new(3, $r_all),
+            SaveResult::new(4, $r_all),
+            SaveResult::new(5, $r_all),
+            SaveResult::new(6, $r_all),
+            SaveResult::new(7, $r_all),
+        ])
+    };
+    ($r1: expr, $r2: expr, $r3: expr, $r4: expr, $r5: expr, $r6: expr, $r7: expr) => {
+        ProcessorResults::from([
+            SaveResult::new(1, $r1),
+            SaveResult::new(2, $r2),
+            SaveResult::new(3, $r3),
+            SaveResult::new(4, $r4),
+            SaveResult::new(5, $r5),
+            SaveResult::new(6, $r6),
+            SaveResult::new(7, $r7),
+        ])
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! assert_processor_results_eq {
+    ($left: expr, $right: expr) => {
+        assert_processor_results_eq!($left, $right, 0.000_5);
+    };
+    ($left: expr, $right: expr, $precision: expr) => {
+        assert!(matches!($left, ProcessorResults { .. }));
+        assert_eq!($left.save_results.len(), $right.save_results.len());
+        for (index, right_result) in $right.save_results.iter().enumerate() {
+            assert_eq!($left.save_results[index].save, right_result.save);
+            assert_float_eq!(
+                $left.save_results[index].value,
+                right_result.value,
+                abs <= $precision
+            );
+        }
+    };
+}
+
 pub mod weapons {
     use crate::{
         abilities::{weapon::*, RerollType},

@@ -65,6 +65,14 @@ where
             _ => value,
         }
     }
+
+    pub fn clone_with_initial(&self, initial: T) -> Self {
+        Self {
+            initial,
+            modifier: self.modifier,
+            min_value: self.min_value,
+        }
+    }
 }
 
 impl<T> From<T> for RollTarget<T>

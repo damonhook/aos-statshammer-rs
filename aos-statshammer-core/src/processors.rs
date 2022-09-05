@@ -8,3 +8,6 @@ pub use average::AverageDamageProcessor;
 
 mod max;
 pub use max::MaxDamageProcessor;
+
+mod simulation;
+pub use simulation::SimulatedDamageProcessor;

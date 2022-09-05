@@ -98,14 +98,11 @@ impl<'a> AverageDamageProcessor<'a> {
         let mut target = RollTarget::new(save as f32, 0.0, Some(f32::max(2.0, (save - 1) as f32)));
         if !self.opponent.map(|o| o.is_ethereal()).unwrap_or(false) {
             target -= self.weapon.rend as f32 + self.average_bonus(ValChar::Rend.into());
-            target += self.opponent.map_or(0.0, |opponent| {
-                opponent
-                    .abilities
-                    .iter()
-                    .fold(0.0, |acc, ability| match ability {
-                        OpponentAbility::SaveBonus(a) => acc + a.value.average(),
-                        _ => acc,
-                    })
+            target += self.opponent.map_or(0.0, |o| {
+                o.abilities.iter().fold(0.0, |acc, ability| match ability {
+                    OpponentAbility::SaveBonus(a) => acc + a.value.average(),
+                    _ => acc,
+                })
             })
         }
         let mut saved_wounds = wounds * roll::probability(target.modified());

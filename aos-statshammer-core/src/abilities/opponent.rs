@@ -3,6 +3,8 @@ use crate::DiceNotation;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+// TODO: Mortal Wound Ward
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SaveReroll {

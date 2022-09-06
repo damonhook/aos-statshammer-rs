@@ -1,10 +1,12 @@
-use super::{roll_target::RollTarget, ProcessorResults};
+use super::{
+    roll_target::{RollTarget, RollTargetValue},
+    ProcessorResults,
+};
 use crate::{
     abilities::{opponent::OpponentAbility, weapon::*},
     Characteristic as Char, Opponent, RollCharacteristic as RollChar, Rollable,
     ValueCharacteristic as ValChar, Weapon,
 };
-mod roll;
 
 // TODO:
 // - Roll leader extra attacks into average bonus
@@ -134,7 +136,7 @@ impl<'a> AverageDamageProcessor<'a> {
 
     /// Get the average extra value resulting from any `Exploding` ability found for the
     /// given `characteristic`.
-    fn average_exploding(&self, phase: RollChar, base: f32, target: RollTarget<f32>) -> f32 {
+    fn average_exploding(&self, phase: RollChar, base: f32, target: RollTarget<f32, f32>) -> f32 {
         self.weapon.abilities.iter().fold(0.0, |acc, a| match a {
             Ability::Exploding(a) if a.characteristic == phase => {
                 let ability_target = RollTarget::new(a.on as f32, target.modifier, Some(2.0));
@@ -148,7 +150,12 @@ impl<'a> AverageDamageProcessor<'a> {
     /// Get the average damage that resulting from any `MortalWounds` abilities for the given
     /// `characteristic`, it also returns the base reduction if applicable.
     /// Returned tuple is in order of `(damage, base_reduction)`.
-    fn mortal_wounds(&self, phase: RollChar, base: f32, target: RollTarget<f32>) -> (f32, f32) {
+    fn mortal_wounds(
+        &self,
+        phase: RollChar,
+        base: f32,
+        target: RollTarget<f32, f32>,
+    ) -> (f32, f32) {
         self.weapon
             .abilities
             .iter()
@@ -176,6 +183,35 @@ impl<'a> AverageDamageProcessor<'a> {
     }
 }
 
+mod roll {
+    use super::*;
+    use crate::abilities::RerollType;
+
+    pub fn probability(target: f32) -> f32 {
+        if target > 7.0 {
+            0.0
+        } else {
+            ((7.0 - target) / 6.0).clamp(0.0, 1.0)
+        }
+    }
+
+    pub fn inverse_probability(target: f32) -> f32 {
+        1.0 - probability(target)
+    }
+
+    pub fn reroll_probability(
+        reroll_type: RerollType,
+        base: f32,
+        target: RollTarget<f32, f32>,
+    ) -> f32 {
+        match reroll_type {
+            RerollType::Any => base * inverse_probability(target.modified()),
+            RerollType::Failed => base * inverse_probability(target.unmodified()),
+            RerollType::Ones => base / 6.0,
+        }
+    }
+}
+
 // ========================================
 //                UNIT TESTS
 // ========================================
@@ -189,6 +225,32 @@ mod tests {
     use test_case::test_case;
 
     static PRECISION: f32 = 0.000_5; // Approximately 3 decimal places
+
+    #[test_case(1.0, 1.0    ; "0+")]
+    #[test_case(1.0, 1.0    ; "1+")]
+    #[test_case(2.0, 0.833  ; "2+")]
+    #[test_case(3.0, 0.667  ; "3+")]
+    #[test_case(4.0, 0.5    ; "4+")]
+    #[test_case(5.0, 0.333  ; "5+")]
+    #[test_case(6.0, 0.167  ; "6+")]
+    #[test_case(7.0, 0.0    ; "7+")]
+    fn roll_probability_for_target(target: f32, expected: f32) {
+        let output = roll::probability(target);
+        assert_float_eq!(output, expected, abs <= 0.0005);
+    }
+
+    #[test_case(1.0, 0.0    ; "0-")]
+    #[test_case(1.0, 0.0    ; "1-")]
+    #[test_case(2.0, 0.167  ; "2-")]
+    #[test_case(3.0, 0.333  ; "3-")]
+    #[test_case(4.0, 0.5    ; "4-")]
+    #[test_case(5.0, 0.667  ; "5-")]
+    #[test_case(6.0, 0.833  ; "6-")]
+    #[test_case(7.0, 1.0    ; "7-")]
+    fn inverse_probability_for_target(target: f32, expected: f32) {
+        let output = roll::inverse_probability(target);
+        assert_float_eq!(output, expected, abs <= PRECISION);
+    }
 
     macro_rules! basic_weapon {
         () => {

@@ -1,6 +1,6 @@
 use std::cmp;
 
-use super::roll_target::RollTarget;
+use super::roll_target::{RollTarget, RollTargetValue};
 use crate::{
     abilities::{opponent::OpponentAbility, weapon::Ability, RerollType},
     Characteristic, Dice, Opponent, RollCharacteristic as RollChar, Rollable,
@@ -9,7 +9,6 @@ use crate::{
 
 // TODO:
 // - Add docstrings and tests (need to move rand somewhere to allow mocking)
-// - Cleanup `RollTarget` to avoid a lot of casting
 
 enum RerollPhase {
     Weapon(RollChar),
@@ -81,10 +80,10 @@ impl<'a> SimulatedDamageProcessor<'a> {
             RollChar::Hit => self.weapon.to_hit,
             RollChar::Wound => self.weapon.to_wound,
         };
-        let mut target = RollTarget::new(characteristic as i32, 0, Some(2));
+        let mut target = RollTarget::new(characteristic, 0, Some(2));
         target += self.roll_bonus(phase.into()) as i32;
         let roll = self.roll_with_rerolls(RerollPhase::Weapon(phase), target);
-        if roll >= target.modified() as u32 {
+        if roll >= target.modified() {
             let mut results = 1 + self.roll_exploding(phase, roll, target);
             let (mortal_wounds, in_addition) = self.roll_mortal_wounds(phase, roll, target);
             if !in_addition {
@@ -97,8 +96,7 @@ impl<'a> SimulatedDamageProcessor<'a> {
     }
 
     fn save_phase(&self) -> bool {
-        let mut target =
-            RollTarget::new(self.save as i32, 0, Some(cmp::max(2, self.save as i32 - 1)));
+        let mut target = RollTarget::new(self.save, 0, Some(cmp::max(2, self.save - 1)));
         if !self.opponent.map(|o| o.is_ethereal()).unwrap_or(false) {
             target -= (self.weapon.rend + self.roll_bonus(ValChar::Rend.into())) as i32;
             target += self.opponent.map_or(0, |o| {
@@ -109,7 +107,7 @@ impl<'a> SimulatedDamageProcessor<'a> {
             });
         }
         let roll = self.roll_with_rerolls(RerollPhase::Opponent, target);
-        roll >= (target.modified() as u32)
+        roll >= target.modified()
     }
 
     fn roll_bonus(&self, phase: Characteristic) -> u32 {
@@ -122,9 +120,9 @@ impl<'a> SimulatedDamageProcessor<'a> {
             })
     }
 
-    fn roll_with_rerolls(&self, phase: RerollPhase, target: RollTarget<i32>) -> u32 {
+    fn roll_with_rerolls(&self, phase: RerollPhase, target: RollTarget<u32, i32>) -> u32 {
         let roll = Dice::d6().roll();
-        if roll < target.modified() as u32 {
+        if roll < target.modified() {
             let reroll_type = match phase {
                 RerollPhase::Weapon(p) => self.weapon.reroll_ability(p).map(|a| a.reroll_type),
                 RerollPhase::Opponent => None,
@@ -142,13 +140,13 @@ impl<'a> SimulatedDamageProcessor<'a> {
         roll
     }
 
-    fn roll_exploding(&self, phase: RollChar, roll: u32, target: RollTarget<i32>) -> u32 {
+    fn roll_exploding(&self, phase: RollChar, roll: u32, target: RollTarget<u32, i32>) -> u32 {
         self.weapon
             .abilities
             .iter()
             .fold(0, |acc, ability| match ability {
                 Ability::Exploding(a) if a.characteristic == phase => {
-                    let exploding_target = target.clone_with_initial(a.on as i32);
+                    let exploding_target = target.clone_with_initial(a.on);
                     if roll >= exploding_target.value(a.unmodified) as u32 {
                         acc + a.extra.roll()
                     } else {
@@ -163,14 +161,14 @@ impl<'a> SimulatedDamageProcessor<'a> {
         &self,
         phase: RollChar,
         roll: u32,
-        target: RollTarget<i32>,
+        target: RollTarget<u32, i32>,
     ) -> (u32, bool) {
         self.weapon
             .abilities
             .iter()
             .fold((0, true), |acc, ability| match ability {
                 Ability::MortalWounds(a) if a.characteristic == phase => {
-                    let mortal_target = target.clone_with_initial(a.on as i32);
+                    let mortal_target = target.clone_with_initial(a.on);
                     if roll >= mortal_target.value(a.unmodified) as u32 {
                         (acc.0 + a.mortals.roll(), acc.1 && a.in_addition)
                     } else {

@@ -5,64 +5,34 @@ use std::{
 
 use num_traits::Zero;
 
-pub trait Max {
-    fn max(self, other: Self) -> Self;
-}
+pub trait RollTargetValue<T> {
+    /// Get the unmodified roll target constrained by the given bounds
+    fn unmodified(&self) -> T;
 
-impl Max for i32 {
-    fn max(self, other: i32) -> i32 {
-        cmp::max(self, other)
-    }
-}
+    /// Get the modified roll target constrained by the given bounds
+    fn modified(&self) -> T;
 
-impl Max for f32 {
-    fn max(self, other: f32) -> f32 {
-        f32::max(self, other)
-    }
+    /// Get either the modified or unmodified roll target value constrained by the given bounds
+    fn value(&self, unmodified: bool) -> T;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct RollTarget<T> {
+pub struct RollTarget<T, U> {
     initial: T,
-    pub modifier: T,
+    pub modifier: U,
     min_value: Option<T>,
 }
 
-impl<T> RollTarget<T>
+impl<T, U> RollTarget<T, U>
 where
-    T: Sub<T, Output = T> + Max + Copy,
+    T: Copy,
+    U: Copy,
 {
-    pub fn new(initial: T, modifier: T, min_value: Option<T>) -> Self {
+    pub fn new(initial: T, modifier: U, min_value: Option<T>) -> Self {
         Self {
             initial,
             modifier,
             min_value,
-        }
-    }
-
-    /// Get the unmodified roll target constrained by the given bounds
-    pub fn unmodified(&self) -> T {
-        self.with_min(self.initial)
-    }
-
-    /// Get the modified roll target constrained by the given bounds
-    pub fn modified(&self) -> T {
-        self.with_min(self.initial - self.modifier)
-    }
-
-    /// Get either the modified or unmodified roll target value constrained by the given bounds
-    pub fn value(&self, unmodified: bool) -> T {
-        if unmodified {
-            self.unmodified()
-        } else {
-            self.modified()
-        }
-    }
-
-    fn with_min(&self, value: T) -> T {
-        match self.min_value {
-            Some(m) => value.max(m),
-            _ => value,
         }
     }
 
@@ -75,64 +45,80 @@ where
     }
 }
 
-impl<T> From<T> for RollTarget<T>
+impl RollTargetValue<f32> for RollTarget<f32, f32> {
+    /// Get the unmodified roll target constrained by the given bounds
+    fn unmodified(&self) -> f32 {
+        self.value(true)
+    }
+
+    /// Get the modified roll target constrained by the given bounds
+    fn modified(&self) -> f32 {
+        self.value(false)
+    }
+
+    /// Get either the modified or unmodified roll target value constrained by the given bounds
+    fn value(&self, unmodified: bool) -> f32 {
+        let v = if unmodified {
+            self.initial
+        } else {
+            self.initial - self.modifier
+        };
+        self.min_value.map_or(v, |m| v.max(m))
+    }
+}
+
+impl RollTargetValue<u32> for RollTarget<u32, i32> {
+    /// Get the unmodified roll target constrained by the given bounds
+    fn unmodified(&self) -> u32 {
+        self.value(true)
+    }
+
+    /// Get the modified roll target constrained by the given bounds
+    fn modified(&self) -> u32 {
+        self.value(false)
+    }
+
+    /// Get either the modified or unmodified roll target value constrained by the given bounds
+    fn value(&self, unmodified: bool) -> u32 {
+        let v: u32 = if unmodified {
+            self.initial
+        } else if self.modifier < (self.initial as i32) {
+            (self.initial as i32 - self.modifier) as u32
+        } else {
+            0
+        };
+        self.min_value.map_or(v, |m| cmp::max(v, m))
+    }
+}
+
+impl<T, U> From<T> for RollTarget<T, U>
 where
-    T: Zero + Max + Copy,
+    U: Zero,
 {
     fn from(d: T) -> Self {
         Self {
             initial: d,
-            modifier: T::zero(),
+            modifier: U::zero(),
             min_value: None,
         }
     }
 }
 
-impl<T> Add<T> for RollTarget<T>
+impl<T, U> AddAssign<U> for RollTarget<T, U>
 where
-    T: Add<T, Output = T> + Max + Copy,
+    U: Add<U, Output = U> + AddAssign<U> + Copy,
 {
-    type Output = Self;
-
-    fn add(self, rhs: T) -> Self::Output {
-        Self {
-            initial: self.initial,
-            modifier: self.modifier + rhs,
-            min_value: self.min_value,
-        }
+    fn add_assign(&mut self, rhs: U) {
+        self.modifier += rhs;
     }
 }
 
-impl<T> AddAssign<T> for RollTarget<T>
+impl<T, U> SubAssign<U> for RollTarget<T, U>
 where
-    T: Add<T, Output = T> + AddAssign<T> + Max + Copy,
+    U: Sub<U, Output = U> + SubAssign<U> + Copy,
 {
-    fn add_assign(&mut self, rhs: T) {
-        *self = *self + rhs
-    }
-}
-
-impl<T> Sub<T> for RollTarget<T>
-where
-    T: Sub<T, Output = T> + Max + Copy,
-{
-    type Output = Self;
-
-    fn sub(self, rhs: T) -> Self::Output {
-        Self {
-            initial: self.initial,
-            modifier: self.modifier - rhs,
-            min_value: self.min_value,
-        }
-    }
-}
-
-impl<T> SubAssign<T> for RollTarget<T>
-where
-    T: Sub<T, Output = T> + SubAssign<T> + Max + Copy,
-{
-    fn sub_assign(&mut self, rhs: T) {
-        *self = *self - rhs
+    fn sub_assign(&mut self, rhs: U) {
+        self.modifier -= rhs
     }
 }
 
@@ -143,8 +129,8 @@ mod tests {
 
     #[test]
     fn roll_target_new() {
-        let output: RollTarget<f32> = RollTarget::new(3., 2., Some(2.));
-        let expected: RollTarget<f32> = RollTarget {
+        let output: RollTarget<f32, f32> = RollTarget::new(3., 2., Some(2.));
+        let expected: RollTarget<f32, f32> = RollTarget {
             initial: 3.,
             modifier: 2.,
             min_value: Some(2.),
@@ -155,7 +141,7 @@ mod tests {
     #[test_case(None => 3. ; "No Bounds")]
     #[test_case(Some(4.) => 4. ; "Min Bounded")]
     fn roll_target_unmodified(min_value: Option<f32>) -> f32 {
-        let target: RollTarget<f32> = RollTarget {
+        let target: RollTarget<f32, f32> = RollTarget {
             initial: 3.,
             modifier: 2.,
             min_value,
@@ -166,7 +152,7 @@ mod tests {
     #[test_case(None => 1. ; "No Bounds")]
     #[test_case(Some(4.) => 4. ; "Min Bounded")]
     fn roll_target_modified(min_value: Option<f32>) -> f32 {
-        let target: RollTarget<f32> = RollTarget {
+        let target: RollTarget<f32, f32> = RollTarget {
             initial: 3.,
             modifier: 2.,
             min_value,
@@ -176,8 +162,8 @@ mod tests {
 
     #[test]
     fn roll_target_from() {
-        let output: RollTarget<f32> = RollTarget::from(2.);
-        let expected: RollTarget<f32> = RollTarget {
+        let output = RollTarget::from(2.);
+        let expected = RollTarget::<f32, f32> {
             initial: 2.,
             modifier: 0.,
             min_value: None,
@@ -186,26 +172,8 @@ mod tests {
     }
 
     #[test]
-    fn roll_target_add() {
-        let a: RollTarget<f32> = RollTarget {
-            initial: 2.,
-            modifier: 1.,
-            min_value: None,
-        };
-        assert_eq!(a.modifier, 1.); // Precondition
-
-        let b: RollTarget<f32> = a + 2.;
-        assert_eq!(b.modifier, 3.); // New RollTarget should have the new modifier value
-        assert_eq!(a.modifier, 1.); // Check no mutation
-    }
-
-    #[test]
     fn roll_target_add_assign() {
-        let mut a: RollTarget<f32> = RollTarget {
-            initial: 2.,
-            modifier: 1.,
-            min_value: None,
-        };
+        let mut a = RollTarget::new(2., 1., None);
         assert_eq!(a.modifier, 1.); // Precondition
 
         a += 2.;

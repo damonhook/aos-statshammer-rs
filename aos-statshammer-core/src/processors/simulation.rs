@@ -9,6 +9,7 @@ use crate::{
 
 // TODO:
 // - Add docstrings and tests (need to move rand somewhere to allow mocking)
+// - Cleanup `RollTarget` to avoid a lot of casting
 
 enum RerollPhase {
     Weapon(RollChar),
@@ -50,9 +51,7 @@ impl<'a> SimulatedDamageProcessor<'a> {
                 _ => acc,
             });
 
-        [0..total_attacks]
-            .iter()
-            .fold(0, |acc, _| acc + self.simulate_attack())
+        (0..total_attacks).fold(0, |acc, _| acc + self.simulate_attack())
     }
 
     fn simulate_attack(&self) -> u32 {
@@ -61,7 +60,7 @@ impl<'a> SimulatedDamageProcessor<'a> {
             return damage;
         }
 
-        let (wounds, extra_wound_damage) = [0..hits].iter().fold((0, 0), |acc, _| {
+        let (wounds, extra_wound_damage) = (0..hits).fold((0, 0), |acc, _| {
             let (wounds, damage) = self.roll_phase(RollChar::Wound);
             (acc.0 + wounds, acc.1 + damage)
         });
@@ -71,9 +70,7 @@ impl<'a> SimulatedDamageProcessor<'a> {
         }
 
         let unsaved_wounds =
-            [0..wounds]
-                .iter()
-                .fold(0, |acc, _| if self.save_phase() { acc } else { acc + 1 });
+            (0..wounds).fold(0, |acc, _| if self.save_phase() { acc } else { acc + 1 });
 
         let damage_per_wound = self.weapon.damage.roll() + self.roll_bonus(ValChar::Damage.into());
         self.damage_with_ward(damage + (unsaved_wounds * damage_per_wound))
@@ -84,10 +81,10 @@ impl<'a> SimulatedDamageProcessor<'a> {
             RollChar::Hit => self.weapon.to_hit,
             RollChar::Wound => self.weapon.to_wound,
         };
-        let mut target = RollTarget::new(characteristic, 0, Some(2));
-        target += self.roll_bonus(phase.into());
+        let mut target = RollTarget::new(characteristic as i32, 0, Some(2));
+        target += self.roll_bonus(phase.into()) as i32;
         let roll = self.roll_with_rerolls(RerollPhase::Weapon(phase), target);
-        if roll >= target.modified() {
+        if roll >= target.modified() as u32 {
             let mut results = 1 + self.roll_exploding(phase, roll, target);
             let (mortal_wounds, in_addition) = self.roll_mortal_wounds(phase, roll, target);
             if !in_addition {
@@ -100,18 +97,19 @@ impl<'a> SimulatedDamageProcessor<'a> {
     }
 
     fn save_phase(&self) -> bool {
-        let mut target = RollTarget::new(self.save, 0, Some(cmp::max(2, self.save - 1)));
+        let mut target =
+            RollTarget::new(self.save as i32, 0, Some(cmp::max(2, self.save as i32 - 1)));
         if !self.opponent.map(|o| o.is_ethereal()).unwrap_or(false) {
-            target -= self.weapon.rend + self.roll_bonus(ValChar::Rend.into());
+            target -= (self.weapon.rend + self.roll_bonus(ValChar::Rend.into())) as i32;
             target += self.opponent.map_or(0, |o| {
                 o.abilities.iter().fold(0, |acc, ability| match ability {
-                    OpponentAbility::SaveBonus(a) => acc + a.value.roll(),
+                    OpponentAbility::SaveBonus(a) => acc + a.value.roll() as i32,
                     _ => acc,
                 })
             });
         }
         let roll = self.roll_with_rerolls(RerollPhase::Opponent, target);
-        roll >= target.modified()
+        roll >= (target.modified() as u32)
     }
 
     fn roll_bonus(&self, phase: Characteristic) -> u32 {
@@ -124,16 +122,16 @@ impl<'a> SimulatedDamageProcessor<'a> {
             })
     }
 
-    fn roll_with_rerolls(&self, phase: RerollPhase, target: RollTarget<u32>) -> u32 {
+    fn roll_with_rerolls(&self, phase: RerollPhase, target: RollTarget<i32>) -> u32 {
         let roll = Dice::d6().roll();
-        if roll < target.modified() {
+        if roll < target.modified() as u32 {
             let reroll_type = match phase {
                 RerollPhase::Weapon(p) => self.weapon.reroll_ability(p).map(|a| a.reroll_type),
                 RerollPhase::Opponent => None,
             };
             let can_reroll = reroll_type.map_or(false, |r| match r {
                 RerollType::Any => true,
-                RerollType::Failed if roll < target.unmodified() => true,
+                RerollType::Failed if roll < target.unmodified() as u32 => true,
                 RerollType::Ones if roll == 1 => true,
                 _ => false,
             });
@@ -144,14 +142,14 @@ impl<'a> SimulatedDamageProcessor<'a> {
         roll
     }
 
-    fn roll_exploding(&self, phase: RollChar, roll: u32, target: RollTarget<u32>) -> u32 {
+    fn roll_exploding(&self, phase: RollChar, roll: u32, target: RollTarget<i32>) -> u32 {
         self.weapon
             .abilities
             .iter()
             .fold(0, |acc, ability| match ability {
                 Ability::Exploding(a) if a.characteristic == phase => {
-                    let exploding_target = target.clone_with_initial(a.on);
-                    if roll >= exploding_target.value(a.unmodified) {
+                    let exploding_target = target.clone_with_initial(a.on as i32);
+                    if roll >= exploding_target.value(a.unmodified) as u32 {
                         acc + a.extra.roll()
                     } else {
                         acc
@@ -165,16 +163,16 @@ impl<'a> SimulatedDamageProcessor<'a> {
         &self,
         phase: RollChar,
         roll: u32,
-        target: RollTarget<u32>,
+        target: RollTarget<i32>,
     ) -> (u32, bool) {
         self.weapon
             .abilities
             .iter()
-            .fold((0, false), |acc, ability| match ability {
+            .fold((0, true), |acc, ability| match ability {
                 Ability::MortalWounds(a) if a.characteristic == phase => {
-                    let mortal_target = target.clone_with_initial(a.on);
-                    if roll >= mortal_target.value(a.unmodified) {
-                        (acc.0 + a.mortals.roll(), acc.1 || a.in_addition)
+                    let mortal_target = target.clone_with_initial(a.on as i32);
+                    if roll >= mortal_target.value(a.unmodified) as u32 {
+                        (acc.0 + a.mortals.roll(), acc.1 && a.in_addition)
                     } else {
                         acc
                     }
@@ -186,7 +184,7 @@ impl<'a> SimulatedDamageProcessor<'a> {
     fn damage_with_ward(&self, damage: u32) -> u32 {
         let ward_saves = self.opponent.and_then(|opponent| {
             opponent.ward().map(|ward| {
-                [0..damage].iter().fold(0, |acc, _| {
+                (0..damage).fold(0, |acc, _| {
                     if Dice::d6().roll() >= ward.on {
                         acc + 1
                     } else {

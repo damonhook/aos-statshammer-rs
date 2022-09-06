@@ -1,5 +1,7 @@
 use aos_statshammer_core::{
-    processors::{AverageDamageProcessor, MaxDamageProcessor, ProcessorResults},
+    processors::{
+        AverageDamageProcessor, MaxDamageProcessor, ProcessorResults, SimulatedDamageProcessor,
+    },
     Opponent, Weapon,
 };
 #[cfg(feature = "serde")]
@@ -39,6 +41,16 @@ impl Unit {
     pub fn max_damage(&self) -> u32 {
         self.weapons.iter().fold(0, |acc, weapon| {
             acc + MaxDamageProcessor::new(weapon).max_damage()
+        })
+    }
+
+    pub fn simulate_damage(&self, save: u32, opponent: Option<&Opponent>) -> u32 {
+        self.weapons.iter().fold(0, |acc, weapon| {
+            let mut processor = SimulatedDamageProcessor::new(weapon, save);
+            if let Some(o) = opponent {
+                processor.opponent(o);
+            }
+            acc + processor.simulate_damage()
         })
     }
 }

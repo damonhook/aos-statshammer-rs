@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use aos_statshammer::Unit;
 use aos_statshammer_core::testutils;
 

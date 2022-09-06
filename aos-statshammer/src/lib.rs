@@ -161,6 +161,6 @@ pub use aos_statshammer_core::{
 };
 
 mod compare;
-pub use compare::{AverageComparisonResult, UnitComparator};
+pub use compare::{AverageComparisonResult, UnitComparator, UnitSimulationResults};
 
 pub mod abilities;

@@ -9,8 +9,8 @@ pub trait Max {
     fn max(self, other: Self) -> Self;
 }
 
-impl Max for u32 {
-    fn max(self, other: u32) -> u32 {
+impl Max for i32 {
+    fn max(self, other: i32) -> i32 {
         cmp::max(self, other)
     }
 }

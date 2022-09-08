@@ -1,10 +1,12 @@
 use super::Dice;
 use super::Rollable;
+use super::Roller;
 use std::fmt::Write as _; // import without risk of name clashing
 use std::{
     cmp, fmt,
     ops::{AddAssign, SubAssign},
 };
+
 #[cfg(feature = "serde")]
 use {
     serde::{Deserialize, Serialize, Serializer},
@@ -159,13 +161,13 @@ impl Rollable for DiceNotation {
     }
 
     /// Roll a "random" number given this notation (with a minimum of `0`)
-    fn roll(&self) -> u32 {
+    fn roll<T: Roller>(&self, roller: &T) -> u32 {
         let mut value: i32 = 0;
         for addition in &self.additions {
-            value += addition.roll() as i32;
+            value += addition.roll(roller) as i32;
         }
         for subtraction in &self.subtractions {
-            value -= subtraction.roll() as i32;
+            value -= subtraction.roll(roller) as i32;
         }
         value += self.constant;
         cmp::max(value, 0) as u32
@@ -349,6 +351,8 @@ impl TryFrom<Value> for DiceNotation {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::rollable::MockRoller;
+    use mockall::predicate::*;
     use test_case::test_case;
 
     #[test]
@@ -472,5 +476,19 @@ mod tests {
     #[test_case(DiceNotation::try_from("4d8 - 3").unwrap() => 15.0 ; "4d8 - 3")]
     fn average(dice_notation: DiceNotation) -> f32 {
         dice_notation.average()
+    }
+
+    #[test]
+    fn roll() {
+        let dn = DiceNotation {
+            additions: vec![Dice::d6(), Dice::d6(), Dice::new(3, 2)],
+            subtractions: vec![Dice::d6()],
+            constant: 2,
+        };
+        let mut mock = MockRoller::default();
+        mock.expect_roll().with(eq(6)).times(3).returning(|_| 4);
+        mock.expect_roll().with(eq(3)).times(2).returning(|_| 1);
+        let output = dn.roll(&mock);
+        assert_eq!(output, 8)
     }
 }

@@ -1,6 +1,6 @@
 use aos_statshammer_core::{
-    abilities::{weapon::*, RerollType},
-    DiceNotation, RollCharacteristic as RollChar, Weapon,
+    abilities::{weapon::*, RerollType, RollCharacteristic as RollChar},
+    DiceNotation, Weapon,
 };
 use criterion::*;
 use std::time::Duration;

@@ -1,5 +1,9 @@
-use crate::{abilities::weapon::*, DiceNotation, RollCharacteristic};
+use crate::{
+    abilities::{weapon::*, RollCharacteristic},
+    DiceNotation,
+};
 use derive_builder::Builder;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -33,6 +37,7 @@ pub struct Weapon {
 
     /// A list of abilities that this weapon contains
     #[builder(default = "vec![]", setter(custom))]
+    #[cfg_attr(feature = "serde", serde(default))]
     pub abilities: Vec<Ability>,
 }
 
@@ -78,8 +83,10 @@ impl Weapon {
     /// A general example with all fields defined, as well as, having some abilities added
     ///
     /// ```
-    /// # use aos_statshammer_core::{Weapon, RollCharacteristic};
-    /// # use aos_statshammer_core::abilities::{RerollType, weapon::{Bonus, Reroll}};
+    /// # use aos_statshammer_core::Weapon;
+    /// # use aos_statshammer_core::abilities::{
+    /// #   RerollType, RollCharacteristic, weapon::{Bonus, Reroll}
+    /// # };
     /// #
     /// let weapon = Weapon::builder()
     ///     .models(5)
@@ -108,8 +115,10 @@ impl Weapon {
     /// [`DiceNotation`]
     ///
     /// ```
-    /// # use aos_statshammer_core::{Weapon, RollCharacteristic};
-    /// # use aos_statshammer_core::abilities::{RerollType, weapon::{Bonus, Reroll}};
+    /// # use aos_statshammer_core::Weapon;
+    /// # use aos_statshammer_core::abilities::{
+    /// #   RerollType, RollCharacteristic, weapon::{Bonus, Reroll}
+    /// # };
     /// #
     /// let weapon = Weapon::builder()
     ///     .try_attacks("d6").unwrap()
@@ -126,8 +135,10 @@ impl Weapon {
     /// If we do not define all of the fields which are required, you will get an error back.
     ///
     /// ```
-    /// # use aos_statshammer_core::{Weapon, RollCharacteristic};
-    /// # use aos_statshammer_core::abilities::{RerollType, weapon::{Bonus, Reroll}};
+    /// # use aos_statshammer_core::Weapon;
+    /// # use aos_statshammer_core::abilities::{
+    /// #   RerollType, RollCharacteristic, weapon::{Bonus, Reroll}
+    /// # };
     /// #
     /// let weapon = Weapon::builder().models(5).build(); // Missing fields
     /// assert!(weapon.is_err());

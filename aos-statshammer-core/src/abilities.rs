@@ -1,9 +1,9 @@
 //! contains the various different types of abilities that you can have, separated into [weapon]
 //! and [opponent] abilities.
+use std::fmt;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 /// Defines the conditions to which the dice can be rerolled
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -56,5 +56,9 @@ macro_rules! create_abilities_enum {
 }
 
 pub(crate) use create_abilities_enum;
+
+mod characteristic;
+pub use characteristic::*;
+
 pub mod opponent;
 pub mod weapon;

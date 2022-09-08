@@ -1,4 +1,4 @@
-use aos_statshammer::{AverageComparisonResult, UnitComparator};
+use aos_statshammer::{average::AverageComparisonResult, UnitComparator};
 use aos_statshammer_core::processors::{ProcessorResults, SaveResult};
 use aos_statshammer_core::{assert_processor_results_eq, processor_results};
 use float_eq::*;

@@ -1,10 +1,10 @@
-use super::Rollable;
+use super::{Rollable, Roller};
 use lazy_static::lazy_static;
-use rand::Rng;
 use regex::Regex;
+use std::fmt;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 // TODO: Move to a lower sized int (e.g: u8)
 
@@ -68,6 +68,19 @@ impl Dice {
         Self { sides, quantity }
     }
 
+    /// Shorthand for creating a single `Dice` with a given number of sides
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use aos_statshammer_core::Dice;
+    /// let dice = Dice::d(3);
+    /// assert_eq!(dice, Dice {sides: 3, quantity: 1});
+    /// ```
+    pub fn d(sides: u32) -> Self {
+        Self { sides, quantity: 1 }
+    }
+
     /// Create a `Dice` with 6 sides (and quantity 1)
     pub fn d6() -> Self {
         Self {
@@ -92,8 +105,8 @@ impl Rollable for Dice {
         (self.quantity as f32) * single_average
     }
 
-    fn roll(&self) -> u32 {
-        rand::thread_rng().gen_range(1..=self.sides)
+    fn roll<T: Roller>(&self, roller: &T) -> u32 {
+        (0..self.quantity).fold(0, |acc, _| acc + roller.roll(self.sides))
     }
 }
 
@@ -142,6 +155,8 @@ impl fmt::Display for Dice {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::rollable::MockRoller;
+    use mockall::predicate;
     use test_case::test_case;
 
     #[test_case(Dice {sides: 3, quantity: 1} => 1 ; "d3")]
@@ -169,6 +184,34 @@ mod tests {
     #[test_case(Dice {sides: 10, quantity: 6} => 33.0 ; "6d10")]
     fn average(dice: Dice) -> f32 {
         dice.average()
+    }
+
+    #[test]
+    fn roll_single() {
+        let mut mock = MockRoller::default();
+        mock.expect_roll()
+            .with(predicate::eq(6))
+            .times(1)
+            .returning(|_| 4);
+        let dice = Dice {
+            sides: 6,
+            quantity: 1,
+        };
+        assert_eq!(dice.roll(&mock), 4);
+    }
+
+    #[test]
+    fn roll_multiple() {
+        let mut mock = MockRoller::default();
+        mock.expect_roll()
+            .with(predicate::eq(6))
+            .times(3)
+            .returning(|_| 4);
+        let dice = Dice {
+            sides: 6,
+            quantity: 3,
+        };
+        assert_eq!(dice.roll(&mock), 12);
     }
 
     #[test_case("d6" => Ok(Dice {sides: 6, quantity: 1}) ; "lowercase d6")]

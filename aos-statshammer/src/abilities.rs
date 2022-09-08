@@ -1,4 +1,6 @@
-pub use aos_statshammer_core::abilities::RerollType;
+pub use aos_statshammer_core::abilities::{
+    Characteristic, RerollType, RollCharacteristic, ValueCharacteristic,
+};
 
 pub mod fields;
 pub trait AbilityDefinition {

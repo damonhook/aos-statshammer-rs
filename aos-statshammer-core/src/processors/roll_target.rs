@@ -1,9 +1,8 @@
+use num_traits::Zero;
 use std::{
     cmp,
     ops::{Add, AddAssign, Sub, SubAssign},
 };
-
-use num_traits::Zero;
 
 pub trait RollTargetValue<T> {
     /// Get the unmodified roll target constrained by the given bounds
@@ -46,17 +45,14 @@ where
 }
 
 impl RollTargetValue<f32> for RollTarget<f32, f32> {
-    /// Get the unmodified roll target constrained by the given bounds
     fn unmodified(&self) -> f32 {
         self.value(true)
     }
 
-    /// Get the modified roll target constrained by the given bounds
     fn modified(&self) -> f32 {
         self.value(false)
     }
 
-    /// Get either the modified or unmodified roll target value constrained by the given bounds
     fn value(&self, unmodified: bool) -> f32 {
         let v = if unmodified {
             self.initial
@@ -68,17 +64,14 @@ impl RollTargetValue<f32> for RollTarget<f32, f32> {
 }
 
 impl RollTargetValue<u32> for RollTarget<u32, i32> {
-    /// Get the unmodified roll target constrained by the given bounds
     fn unmodified(&self) -> u32 {
         self.value(true)
     }
 
-    /// Get the modified roll target constrained by the given bounds
     fn modified(&self) -> u32 {
         self.value(false)
     }
 
-    /// Get either the modified or unmodified roll target value constrained by the given bounds
     fn value(&self, unmodified: bool) -> u32 {
         let v: u32 = if unmodified {
             self.initial

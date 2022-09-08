@@ -3,9 +3,11 @@ use super::{
     ProcessorResults,
 };
 use crate::{
-    abilities::{opponent::OpponentAbility, weapon::*},
-    Characteristic as Char, Opponent, RollCharacteristic as RollChar, Rollable,
-    ValueCharacteristic as ValChar, Weapon,
+    abilities::{
+        opponent::OpponentAbility, weapon::Ability, Characteristic as Char,
+        RollCharacteristic as RollChar, ValueCharacteristic as ValChar,
+    },
+    Opponent, Rollable, Weapon,
 };
 
 // TODO:
@@ -219,8 +221,8 @@ mod roll {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{abilities::weapon::*, processors::SaveResult, DiceNotation};
     use crate::{assert_processor_results_eq, processor_results};
-    use crate::{processors::SaveResult, DiceNotation};
     use float_eq::assert_float_eq;
     use test_case::test_case;
 
@@ -267,6 +269,16 @@ mod tests {
                 abilities: $abilities,
             }
         };
+    }
+
+    #[test]
+    fn average_damage() {
+        let weapon = basic_weapon!();
+        let processor = AverageDamageProcessor::new(&weapon);
+        assert_processor_results_eq!(
+            processor.average_damage(),
+            processor_results!(2.222, 4.444, 6.667, 8.889, 11.111, 13.333, 13.333)
+        );
     }
 
     #[test]

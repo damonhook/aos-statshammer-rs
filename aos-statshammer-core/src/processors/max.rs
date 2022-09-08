@@ -1,9 +1,8 @@
-use std::cmp;
-
 use crate::{
-    abilities::weapon::*, RollCharacteristic as RollChar, Rollable, ValueCharacteristic as ValChar,
-    Weapon,
+    abilities::{weapon::Ability, RollCharacteristic as RollChar, ValueCharacteristic as ValChar},
+    Rollable, Weapon,
 };
+use std::cmp;
 
 // TODO:
 // - Roll leader extra attacks into max bonus
@@ -109,7 +108,7 @@ impl<'a> MaxDamageProcessor<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::DiceNotation;
+    use crate::{abilities::weapon::*, DiceNotation};
     use test_case::test_case;
 
     macro_rules! basic_weapon {
@@ -127,6 +126,13 @@ mod tests {
                 abilities: $abilities,
             }
         };
+    }
+
+    #[test]
+    fn max_damage() {
+        let weapon = basic_weapon!();
+        let processor = MaxDamageProcessor::new(&weapon);
+        assert_eq!(processor.max_damage(), 40);
     }
 
     #[test]

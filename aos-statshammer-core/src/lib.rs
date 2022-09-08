@@ -49,11 +49,8 @@
 //! let results = MaxDamageProcessor::new(&weapon).max_damage();
 //! ```
 
-mod characteristic;
-pub use characteristic::{Characteristic, RollCharacteristic, ValueCharacteristic};
-
 mod rollable;
-pub use rollable::{Dice, DiceNotation, Rollable};
+pub use rollable::{Dice, DiceNotation, DiceRoller, Rollable, Roller};
 
 mod weapon;
 pub use weapon::{Weapon, WeaponBuilder};

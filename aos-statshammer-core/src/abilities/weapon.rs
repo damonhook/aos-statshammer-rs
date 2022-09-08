@@ -1,5 +1,6 @@
-use super::{create_abilities_enum, RerollType};
-use crate::{Characteristic, DiceNotation, RollCharacteristic};
+use super::{create_abilities_enum, Characteristic, RerollType, RollCharacteristic};
+use crate::DiceNotation;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

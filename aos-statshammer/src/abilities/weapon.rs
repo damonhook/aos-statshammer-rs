@@ -1,7 +1,8 @@
 use super::RerollType;
-use super::{fields::*, AbilityDefinition};
+use super::{
+    fields::*, AbilityDefinition, RollCharacteristic as RollChar, ValueCharacteristic as ValChar,
+};
 pub use aos_statshammer_core::abilities::weapon::*;
-use aos_statshammer_core::{RollCharacteristic as RollChar, ValueCharacteristic as ValChar};
 
 macro_rules! characteristic_choices {
     () => {

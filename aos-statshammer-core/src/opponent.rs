@@ -1,5 +1,6 @@
 use crate::abilities::opponent::*;
 use derive_builder::Builder;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

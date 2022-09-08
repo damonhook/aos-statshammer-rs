@@ -2,11 +2,11 @@ use aos_statshammer_core::{
     abilities::{
         opponent::{OpponentAbility, SaveBonus},
         weapon::*,
-        RerollType,
+        Characteristic as Char, RerollType, RollCharacteristic as RollChar,
+        ValueCharacteristic as ValChar,
     },
     processors::AverageDamageProcessor,
-    Characteristic as Char, Dice, DiceNotation, Opponent, RollCharacteristic as RollChar,
-    ValueCharacteristic as ValChar, Weapon,
+    Dice, DiceNotation, Opponent, Weapon,
 };
 use criterion::*;
 use std::time::Duration;

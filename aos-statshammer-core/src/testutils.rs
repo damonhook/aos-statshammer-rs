@@ -47,8 +47,8 @@ macro_rules! assert_processor_results_eq {
 
 pub mod weapons {
     use crate::{
-        abilities::{weapon::*, RerollType},
-        DiceNotation, RollCharacteristic as RollChar, Weapon,
+        abilities::{weapon::*, RerollType, RollCharacteristic as RollChar},
+        DiceNotation, Weapon,
     };
 
     pub mod gotrek {

@@ -29,8 +29,8 @@
 //!
 //! ```
 //! # use aos_statshammer::{
-//! #   abilities::{RerollType, weapon::*},
-//! #   DiceNotation, RollCharacteristic, Unit, Weapon
+//! #   abilities::{RerollType, RollCharacteristic, weapon::*},
+//! #   DiceNotation, Unit, Weapon
 //! # };
 //! #
 //! let chainrasp_horde = Unit::new(
@@ -52,8 +52,8 @@
 //!
 //! ```
 //! # use aos_statshammer::{
-//! #   abilities::{RerollType, weapon::*},
-//! #   DiceNotation, RollCharacteristic, Unit, Weapon
+//! #   abilities::{RerollType, RollCharacteristic, weapon::*},
+//! #   DiceNotation, Unit, Weapon
 //! # };
 //! #
 //! let gotrek = Unit::new(
@@ -92,8 +92,8 @@
 //!
 //! ```
 //! # use aos_statshammer::{
-//! #   abilities::{RerollType, weapon::*},
-//! #   DiceNotation, RollCharacteristic, Unit, Weapon
+//! #   abilities::{RerollType, RollCharacteristic, weapon::*},
+//! #   DiceNotation, Unit, Weapon
 //! # };
 //! use aos_statshammer::UnitComparator;
 //!
@@ -156,11 +156,12 @@ mod unit;
 pub use unit::Unit;
 
 // Re-export components needed for this lib
-pub use aos_statshammer_core::{
-    Characteristic, DiceNotation, Opponent, RollCharacteristic, Rollable, Weapon,
-};
+pub use aos_statshammer_core::{DiceNotation, Opponent, Rollable, Weapon};
+
+mod results;
+pub use results::{average, simulation};
 
 mod compare;
-pub use compare::{AverageComparisonResult, UnitComparator, UnitSimulationResults};
+pub use compare::UnitComparator;
 
 pub mod abilities;

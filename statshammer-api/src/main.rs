@@ -13,7 +13,8 @@ mod comparisons;
 async fn main() {
     let aos_routes = Router::new()
         .route("/abilities", get(abilities::get_abilities))
-        .route("/compare/average", post(comparisons::compare_average));
+        .route("/compare/average", post(comparisons::compare_average))
+        .route("/compare/simulated", post(comparisons::compare_simulated));
 
     let app = Router::new().nest("/aos", aos_routes);
 

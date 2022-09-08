@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 aos-statshammer-core = { path = "../aos-statshammer-core" }
 serde = { version = "*", features = ["derive"] }
+itertools = "*"
 
 [features]
 serde = ["aos-statshammer-core/serde"]

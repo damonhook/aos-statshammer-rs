@@ -1,7 +1,7 @@
 use crate::{
     results::{
         average::AverageComparisonResult,
-        simulation::{Buckets, SaveSimulatedResult, SimulatedUnitResult},
+        simulation::{Buckets, SimulatedUnitResult},
     },
     unit::Unit,
 };
@@ -28,22 +28,21 @@ impl<'a> UnitComparator<'a> {
             .collect()
     }
 
-    pub fn compare_simulated_damage(&self, num_simulations: u32) -> Vec<SimulatedUnitResult> {
+    pub fn compare_simulated_damage(
+        &self,
+        save: u32,
+        num_simulations: u32,
+    ) -> Vec<SimulatedUnitResult> {
         self.units
             .iter()
-            .map(|unit| SimulatedUnitResult {
-                name: unit.name.clone(),
-                results: (1..=7)
-                    .map(|save| {
-                        let result = unit.simulate_damage(save, self.opponent, num_simulations);
-                        SaveSimulatedResult {
-                            save,
-                            buckets: Buckets::from(&result.buckets),
-                            average: result.mean(),
-                        }
-                    })
-                    .collect(),
-                max: unit.max_damage(),
+            .map(|unit| {
+                let result = unit.simulate_damage(save, self.opponent, num_simulations);
+                SimulatedUnitResult {
+                    name: unit.name.clone(),
+                    results: Buckets::from(&result.buckets),
+                    average: result.mean(),
+                    max: unit.max_damage(),
+                }
             })
             .collect()
     }

@@ -13,16 +13,11 @@ pub trait Roller {
     fn roll(&self, sides: u32) -> u32;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DiceRoller;
 impl DiceRoller {
     #[allow(unused)]
     fn new() -> Self {
-        Self {}
-    }
-}
-impl Default for DiceRoller {
-    fn default() -> Self {
         Self {}
     }
 }

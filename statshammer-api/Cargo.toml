@@ -8,8 +8,10 @@ edition = "2021"
 [dependencies]
 aos-statshammer = { path = "../aos-statshammer", features = ["serde"] }
 axum = "*"
+tracing-subscriber = "*"
 hyper = { version = "*", features = ["full"] }
 tokio = { version = "*", features = ["full"] }
 tower = "*"
+tower-http = { version = "*", features = ["trace", "compression-gzip"] }
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"

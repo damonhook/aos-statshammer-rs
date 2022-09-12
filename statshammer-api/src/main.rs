@@ -6,11 +6,12 @@ use axum::{
     Router,
 };
 use tower::ServiceBuilder;
-use tower_http::{compression::CompressionLayer, trace::TraceLayer};
+use tower_http::{catch_panic::CatchPanicLayer, compression::CompressionLayer, trace::TraceLayer};
 
 mod abilities;
 mod comparisons;
 mod errors;
+mod extract;
 
 #[tokio::main]
 async fn main() {
@@ -24,7 +25,8 @@ async fn main() {
     let app = Router::new().nest("/aos", aos_routes).layer(
         ServiceBuilder::new()
             .layer(TraceLayer::new_for_http())
-            .layer(CompressionLayer::new()),
+            .layer(CompressionLayer::new())
+            .layer(CatchPanicLayer::custom(errors::panic_handler)),
     );
 
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())

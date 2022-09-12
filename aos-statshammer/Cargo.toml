@@ -17,6 +17,7 @@ serde = ["aos-statshammer-core/serde"]
 float_eq = "~1.0.0"
 test-case = "~2.2.1"
 criterion = "~0.3.6"
+derive-new = "*"
 
 [[bench]]
 name = "all"

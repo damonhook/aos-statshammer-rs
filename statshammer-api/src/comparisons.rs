@@ -1,9 +1,9 @@
 use crate::errors::ApiError;
+use crate::extract::{Json, Query};
 use aos_statshammer::{
     average::AverageComparisonResult, simulation::SimulatedUnitResult, Opponent, Unit,
     UnitComparator,
 };
-use axum::{extract::Query, Json};
 use hyper::StatusCode;
 use serde::{Deserialize, Serialize};
 
@@ -66,7 +66,6 @@ pub async fn compare_simulated(
         ));
     }
     let comparator = UnitComparator::new(&payload.units, payload.opponent.as_ref());
-    Ok(Json(SimulatedComparisonResponse {
-        results: comparator.compare_simulated_damage(query.save, query.iterations),
-    }))
+    let results = comparator.compare_simulated_damage(query.save, query.iterations);
+    Ok(Json(SimulatedComparisonResponse { results }))
 }

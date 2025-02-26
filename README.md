@@ -1,6 +1,10 @@
 # AOS Statshammer (Rust)
 
-This is a re-imagining of the AOS Statshammer project written in Rust. This is still a work in progress
+> [!NOTE]
+> This is a work in progress as it is being reworked for v4 of AoS. 
+> To view a more complete Rust REST API based on v3, see [here](https://github.com/damonhook/aos-statshammer-rs/tree/0cc6ffa5d0651dd7494f1da0bc79a8355b501014)
+
+This is a re-imagining of the AOS Statshammer project written in Rust.
 
 > [!NOTE]
 > If you are looking for the AOS Statshammer web app, head to:

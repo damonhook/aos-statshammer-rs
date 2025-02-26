@@ -1,0 +1,16 @@
+[characteristics]
+attack = 2
+hit = 3
+wound = 4
+rend = 0
+damage = 1
+
+[abilities]
+bonus = [
+    { to = "attacks", amount = 1 },
+    { to = "wound" },
+    { to = "damage", amount = 2 },
+]
+reroll = [
+    { to = "hit", type = "ones" }
+]

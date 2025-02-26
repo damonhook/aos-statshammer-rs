@@ -10,3 +10,6 @@
 **/*.rs.bk
 
 **/.DS_Store
+
+# IDE
+**/.idea

@@ -1,0 +1,6 @@
+[characteristics]
+save = 4
+
+[abilities]
+ethereal = true
+reroll = "ones"

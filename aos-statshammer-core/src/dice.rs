@@ -23,4 +23,4 @@ impl Dice {
     }
 }
 
-pub(crate) const D6: Dice = Dice {sides: 6};
+pub(crate) const D6: Dice = Dice { sides: 6 };

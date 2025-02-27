@@ -1,0 +1,19 @@
+[characteristics]
+attack = 2
+hit = 3
+wound = 4
+rend = 1
+damage = 2
+
+[abilities]
+bonus = [
+    { to = "attacks", amount = 1 },
+    { to = "wound" },
+    { to = "damage", amount = 2 },
+]
+reroll = [
+    { to = "hit", type = "ones" }
+]
+exploding = [
+    { to = "hit", on = 6, extra = 1 }
+]

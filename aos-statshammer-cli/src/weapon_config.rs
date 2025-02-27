@@ -1,5 +1,5 @@
 use crate::rerolls::RerollType;
-use crate::serde_utils::default_i16;
+use crate::serde_utils::*;
 use aos_statshammer_core::weapon;
 use serde::Deserialize;
 
@@ -21,11 +21,15 @@ pub(crate) struct Characteristics {
 
 #[derive(Debug, Deserialize, Default)]
 pub(crate) struct Abilities {
+    #[serde(default)]
     bonus: Vec<BonusAbility>,
+    #[serde(default)]
     reroll: Vec<RerollAbility>,
+    #[serde(default)]
+    exploding: Vec<ExplodingAbility>,
 }
 
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Copy, Clone, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum ValueCharacteristic {
     Attacks,
@@ -35,14 +39,14 @@ pub(crate) enum ValueCharacteristic {
     Damage,
 }
 
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Copy, Clone, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum RollCharacteristic {
     Hit,
     Wound,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Copy, Clone)]
 pub(crate) struct BonusAbility {
     to: ValueCharacteristic,
     #[serde(default = "default_i16::<1>")]
@@ -56,6 +60,26 @@ pub(crate) struct RerollAbility {
     reroll_type: RerollType,
 }
 
+#[derive(Debug, Deserialize, Copy, Clone)]
+pub(crate) struct ExplodingAbility {
+    to: RollCharacteristic,
+    #[serde(default = "default_u8::<6>")]
+    on: u8,
+    #[serde(default = "default_bool::<false>")]
+    unmodified: bool,
+    #[serde(default = "default_u8::<1>")]
+    extra: u8,
+}
+impl From<ExplodingAbility> for weapon::ExplodingAbility {
+    fn from(value: ExplodingAbility) -> Self {
+        Self {
+            on: value.on,
+            unmodified: value.unmodified,
+            extra: value.extra,
+        }
+    }
+}
+
 impl TryInto<weapon::Weapon> for WeaponConfig {
     type Error = anyhow::Error;
     fn try_into(self) -> Result<weapon::Weapon, Self::Error> {
@@ -63,25 +87,27 @@ impl TryInto<weapon::Weapon> for WeaponConfig {
         builder
             .attacks(weapon::Attacks {
                 value: self.characteristics.attack,
-                bonus: Some(self.bonus_to(ValueCharacteristic::Attacks)),
+                bonus: self.bonus_to(ValueCharacteristic::Attacks),
             })
             .hit(weapon::Hit {
                 value: self.characteristics.hit,
-                bonus: Some(self.bonus_to(ValueCharacteristic::Hit)),
+                bonus: self.bonus_to(ValueCharacteristic::Hit),
                 reroll: self.reroll_to(RollCharacteristic::Hit).map(Into::into),
+                exploding: self.exploding_to(RollCharacteristic::Hit).map(Into::into),
             })
             .wound(weapon::Wound {
                 value: self.characteristics.wound,
-                bonus: Some(self.bonus_to(ValueCharacteristic::Wound)),
+                bonus: self.bonus_to(ValueCharacteristic::Wound),
                 reroll: self.reroll_to(RollCharacteristic::Wound).map(Into::into),
+                exploding: self.exploding_to(RollCharacteristic::Wound).map(Into::into),
             })
             .rend(weapon::Rend {
                 value: self.characteristics.rend,
-                bonus: Some(self.bonus_to(ValueCharacteristic::Rend)),
+                bonus: self.bonus_to(ValueCharacteristic::Rend),
             })
             .damage(weapon::Damage {
                 value: self.characteristics.damage,
-                bonus: Some(self.bonus_to(ValueCharacteristic::Damage)),
+                bonus: self.bonus_to(ValueCharacteristic::Damage),
             });
         builder.build().map_err(Into::into)
     }
@@ -103,6 +129,14 @@ impl WeaponConfig {
             .filter(|a| a.to == to)
             .map(|a| a.reroll_type)
             .max()
+    }
+
+    fn exploding_to(&self, to: RollCharacteristic) -> Option<ExplodingAbility> {
+        self.abilities
+            .exploding
+            .iter()
+            .find(|a| a.to == to)
+            .copied()
     }
 }
 
@@ -199,25 +233,23 @@ mod tests {
             weapon::Weapon {
                 attacks: weapon::Attacks {
                     value: 2,
-                    bonus: Some(0)
+                    ..Default::default()
                 },
                 hit: weapon::Hit {
                     value: 3,
-                    bonus: Some(0),
                     ..Default::default()
                 },
                 wound: weapon::Wound {
                     value: 4,
-                    bonus: Some(0),
                     ..Default::default()
                 },
                 rend: weapon::Rend {
                     value: 1,
-                    bonus: Some(0)
+                    ..Default::default()
                 },
                 damage: weapon::Damage {
                     value: 1,
-                    bonus: Some(0)
+                    ..Default::default()
                 },
             }
         )

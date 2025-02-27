@@ -1,9 +1,16 @@
 use crate::RerollType;
-use crate::characteristics::RollTarget;
+use crate::characteristics::*;
 use crate::dice::D6;
 use derive_builder::Builder;
 
-pub type Save = RollTarget;
+#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
+pub struct Save {
+    pub value: u8,
+    pub bonus: i16,
+    pub reroll: Option<RerollType>,
+}
+impl_characteristic!(Save, value, bonus, -);
+impl_reroll!(Save, reroll);
 
 #[derive(Debug, Builder)]
 pub struct Target {
@@ -43,7 +50,7 @@ where
 impl TargetBuilder {
     pub fn bonus(&mut self, bonus: i16) -> &mut Self {
         self.save = Some(Save {
-            bonus: Some(bonus),
+            bonus,
             ..self.save.unwrap_or_default()
         });
         self
@@ -97,7 +104,7 @@ mod tests {
         let target = Target {
             save: Save {
                 value: 4,
-                bonus: Some(1),
+                bonus: 1,
                 reroll: None,
             },
             ethereal: false,
@@ -110,7 +117,7 @@ mod tests {
         let target = Target {
             save: Save {
                 value: 4,
-                bonus: Some(1),
+                bonus: 1,
                 reroll: None,
             },
             ethereal: true,

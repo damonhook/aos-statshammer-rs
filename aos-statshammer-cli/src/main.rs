@@ -1,7 +1,7 @@
 mod rerolls;
+mod serde_utils;
 mod target_config;
 mod weapon_config;
-mod serde_utils;
 
 use crate::target_config::TargetConfig;
 use crate::weapon_config::WeaponConfig;

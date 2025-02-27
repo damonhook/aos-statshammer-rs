@@ -5,4 +5,6 @@ macro_rules! serde_default_fn {
         }
     };
 }
+serde_default_fn!(default_u8, u8);
 serde_default_fn!(default_i16, i16);
+serde_default_fn!(default_bool, bool);
